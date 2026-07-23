@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { AMENITY_LABEL, AMENITY_OPTIONS, ROOM_TYPES, type RoomTypeValue } from "@/lib/constants";
-import { X, Upload, Loader2 } from "lucide-react";
+import { X, Upload, Loader2, ArrowLeft, ArrowRight, Star } from "lucide-react";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
@@ -76,19 +76,21 @@ export function ListingForm({
   const uploadFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
-    const uploaded: string[] = [];
+    const list = Array.from(files);
     try {
-      for (const file of Array.from(files)) {
-        const ext = file.name.split(".").pop() ?? "jpg";
-        const path = `${crypto.randomUUID()}.${ext}`;
-        const { error } = await supabase.storage
-          .from(BUCKET)
-          .upload(path, file, { contentType: file.type, cacheControl: "3600" });
-        if (error) throw error;
-        uploaded.push(path);
-      }
-      setValues((prev) => ({ ...prev, photos: [...prev.photos, ...uploaded] }));
-      toast.success(`Uploaded ${uploaded.length} photo${uploaded.length > 1 ? "s" : ""}`);
+      const results = await Promise.all(
+        list.map(async (file) => {
+          const ext = file.name.split(".").pop() ?? "jpg";
+          const path = `${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage
+            .from(BUCKET)
+            .upload(path, file, { contentType: file.type, cacheControl: "3600" });
+          if (error) throw error;
+          return path;
+        }),
+      );
+      setValues((prev) => ({ ...prev, photos: [...prev.photos, ...results] }));
+      toast.success(`Uploaded ${results.length} photo${results.length > 1 ? "s" : ""}`);
     } catch (e: any) {
       toast.error(e.message ?? "Upload failed");
     } finally {
@@ -98,6 +100,26 @@ export function ListingForm({
 
   const removePhoto = (p: string) => {
     setValues((prev) => ({ ...prev, photos: prev.photos.filter((x) => x !== p) }));
+  };
+
+  const movePhoto = (idx: number, dir: -1 | 1) => {
+    setValues((prev) => {
+      const next = [...prev.photos];
+      const j = idx + dir;
+      if (j < 0 || j >= next.length) return prev;
+      [next[idx], next[j]] = [next[j], next[idx]];
+      return { ...prev, photos: next };
+    });
+  };
+
+  const makeCover = (idx: number) => {
+    setValues((prev) => {
+      if (idx === 0) return prev;
+      const next = [...prev.photos];
+      const [p] = next.splice(idx, 1);
+      next.unshift(p);
+      return { ...prev, photos: next };
+    });
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -226,33 +248,74 @@ export function ListingForm({
         {values.photos.length === 0 ? (
           <p className="text-xs text-muted-foreground">No photos yet.</p>
         ) : (
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {values.photos.map((p) => {
-              const src = /^https?:\/\//.test(p) ? p : photoUrls[p];
-              return (
-                <div
-                  key={p}
-                  className="relative aspect-square overflow-hidden rounded-lg bg-muted ring-1 ring-border"
-                >
-                  {src ? (
-                    <img src={src} alt="" className="size-full object-cover" />
-                  ) : (
-                    <div className="grid size-full place-items-center text-[10px] text-muted-foreground">
-                      Loading...
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(p)}
-                    aria-label="Remove"
-                    className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/60 text-white"
+          <>
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              First photo is the cover. Use arrows to reorder or ★ to set cover.
+            </p>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {values.photos.map((p, idx) => {
+                const src = /^https?:\/\//.test(p) ? p : photoUrls[p];
+                const isCover = idx === 0;
+                return (
+                  <div
+                    key={p}
+                    className="relative aspect-square overflow-hidden rounded-lg bg-muted ring-1 ring-border"
                   >
-                    <X className="size-3" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+                    {src ? (
+                      <img src={src} alt="" className="size-full object-cover" />
+                    ) : (
+                      <div className="grid size-full place-items-center text-[10px] text-muted-foreground">
+                        Loading...
+                      </div>
+                    )}
+                    {isCover && (
+                      <span className="absolute left-1 top-1 rounded-full bg-brand-green px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                        Cover
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(p)}
+                      aria-label="Remove"
+                      className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/60 text-white"
+                    >
+                      <X className="size-3" />
+                    </button>
+                    <div className="absolute inset-x-1 bottom-1 flex items-center justify-between gap-1">
+                      <button
+                        type="button"
+                        onClick={() => movePhoto(idx, -1)}
+                        disabled={idx === 0}
+                        aria-label="Move left"
+                        className="grid size-6 place-items-center rounded-full bg-black/60 text-white disabled:opacity-30"
+                      >
+                        <ArrowLeft className="size-3" />
+                      </button>
+                      {!isCover && (
+                        <button
+                          type="button"
+                          onClick={() => makeCover(idx)}
+                          aria-label="Set as cover"
+                          className="grid size-6 place-items-center rounded-full bg-black/60 text-white"
+                        >
+                          <Star className="size-3" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => movePhoto(idx, 1)}
+                        disabled={idx === values.photos.length - 1}
+                        aria-label="Move right"
+                        className="grid size-6 place-items-center rounded-full bg-black/60 text-white disabled:opacity-30"
+                      >
+                        <ArrowRight className="size-3" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
