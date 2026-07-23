@@ -76,19 +76,21 @@ export function ListingForm({
   const uploadFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
-    const uploaded: string[] = [];
+    const list = Array.from(files);
     try {
-      for (const file of Array.from(files)) {
-        const ext = file.name.split(".").pop() ?? "jpg";
-        const path = `${crypto.randomUUID()}.${ext}`;
-        const { error } = await supabase.storage
-          .from(BUCKET)
-          .upload(path, file, { contentType: file.type, cacheControl: "3600" });
-        if (error) throw error;
-        uploaded.push(path);
-      }
-      setValues((prev) => ({ ...prev, photos: [...prev.photos, ...uploaded] }));
-      toast.success(`Uploaded ${uploaded.length} photo${uploaded.length > 1 ? "s" : ""}`);
+      const results = await Promise.all(
+        list.map(async (file) => {
+          const ext = file.name.split(".").pop() ?? "jpg";
+          const path = `${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage
+            .from(BUCKET)
+            .upload(path, file, { contentType: file.type, cacheControl: "3600" });
+          if (error) throw error;
+          return path;
+        }),
+      );
+      setValues((prev) => ({ ...prev, photos: [...prev.photos, ...results] }));
+      toast.success(`Uploaded ${results.length} photo${results.length > 1 ? "s" : ""}`);
     } catch (e: any) {
       toast.error(e.message ?? "Upload failed");
     } finally {
@@ -98,6 +100,26 @@ export function ListingForm({
 
   const removePhoto = (p: string) => {
     setValues((prev) => ({ ...prev, photos: prev.photos.filter((x) => x !== p) }));
+  };
+
+  const movePhoto = (idx: number, dir: -1 | 1) => {
+    setValues((prev) => {
+      const next = [...prev.photos];
+      const j = idx + dir;
+      if (j < 0 || j >= next.length) return prev;
+      [next[idx], next[j]] = [next[j], next[idx]];
+      return { ...prev, photos: next };
+    });
+  };
+
+  const makeCover = (idx: number) => {
+    setValues((prev) => {
+      if (idx === 0) return prev;
+      const next = [...prev.photos];
+      const [p] = next.splice(idx, 1);
+      next.unshift(p);
+      return { ...prev, photos: next };
+    });
   };
 
   const submit = async (e: React.FormEvent) => {
