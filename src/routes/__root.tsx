@@ -75,26 +75,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SafiRooms — Safi Verified rooms & rentals in Uganda" },
+      { title: "SafiRooms — Safi Verified rooms in Uganda" },
       {
         name: "description",
         content:
-          "Browse Safi Verified single rooms, self-contained, apartments and business rooms across Uganda. Filter by location and rent, then call or WhatsApp the agent directly.",
+          "Browse trusted rental listings across Uganda. Filter by room type, location, and rent. Call or WhatsApp to book instantly.",
       },
       { name: "author", content: "SafiRooms" },
       { property: "og:title", content: "SafiRooms — Safi Verified rooms in Uganda" },
       {
         property: "og:description",
         content:
-          "Trusted rental listings across Uganda. Filter by room type, location, and rent, then call now.",
+          "Browse trusted rental listings across Uganda. Filter by room type, location, and rent. Call or WhatsApp to book instantly.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#1e3a8a" },
+      { name: "twitter:title", content: "SafiRooms — Safi Verified rooms in Uganda" },
+      { name: "twitter:description", content: "Browse trusted rental listings across Uganda. Filter by room type, location, and rent. Call or WhatsApp to book instantly." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/TE9ELa0BpIeG8JLbb9FRRFaCSEq2/social-images/social-1784792969085-file_0000000085f481f4b77a1d7a190ed85a.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/TE9ELa0BpIeG8JLbb9FRRFaCSEq2/social-images/social-1784792969085-file_0000000085f481f4b77a1d7a190ed85a.webp" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
       {

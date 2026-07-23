@@ -48,11 +48,11 @@ export const Route = createFileRoute("/")({
         content:
           "Browse trusted rental listings across Uganda. Filter by room type, location, and rent. Call or WhatsApp to book instantly.",
       },
-      { property: "og:title", content: "SafiRooms — Rooms in Uganda" },
+      { property: "og:title", content: "SafiRooms — Safi Verified rooms in Uganda" },
       {
         property: "og:description",
         content:
-          "Safi Verified rooms, apartments and self-contained units across Uganda. Book by call or WhatsApp.",
+          "Browse trusted rental listings across Uganda. Filter by room type, location, and rent. Call or WhatsApp to book instantly.",
       },
     ],
   }),
