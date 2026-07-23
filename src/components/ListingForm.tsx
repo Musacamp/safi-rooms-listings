@@ -73,6 +73,32 @@ export function ListingForm({
     }));
   };
 
+  const compressImage = async (file: File): Promise<{ blob: Blob; ext: string; type: string }> => {
+    if (!file.type.startsWith("image/")) {
+      return { blob: file, ext: file.name.split(".").pop() ?? "bin", type: file.type };
+    }
+    try {
+      const bitmap = await createImageBitmap(file);
+      const MAX = 1600;
+      const scale = Math.min(1, MAX / Math.max(bitmap.width, bitmap.height));
+      const w = Math.round(bitmap.width * scale);
+      const h = Math.round(bitmap.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      bitmap.close?.();
+      const blob: Blob = await new Promise((res, rej) =>
+        canvas.toBlob((b) => (b ? res(b) : rej(new Error("compress failed"))), "image/webp", 0.82),
+      );
+      if (blob.size < file.size) return { blob, ext: "webp", type: "image/webp" };
+    } catch {
+      // fall through to original
+    }
+    return { blob: file, ext: file.name.split(".").pop() ?? "jpg", type: file.type };
+  };
+
   const uploadFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
@@ -80,11 +106,11 @@ export function ListingForm({
     try {
       const results = await Promise.all(
         list.map(async (file) => {
-          const ext = file.name.split(".").pop() ?? "jpg";
+          const { blob, ext, type } = await compressImage(file);
           const path = `${crypto.randomUUID()}.${ext}`;
           const { error } = await supabase.storage
             .from(BUCKET)
-            .upload(path, file, { contentType: file.type, cacheControl: "3600" });
+            .upload(path, blob, { contentType: type, cacheControl: "3600" });
           if (error) throw error;
           return path;
         }),
