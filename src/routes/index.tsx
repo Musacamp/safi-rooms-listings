@@ -88,9 +88,10 @@ function Home() {
             <ThemeToggle />
             <Link
               to="/admin"
-              className="hidden rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground ring-1 ring-border sm:inline-flex"
+              aria-label="Admin sign in"
+              className="inline-flex items-center gap-1 rounded-lg bg-secondary px-2.5 py-1.5 text-xs font-medium text-secondary-foreground ring-1 ring-border"
             >
-              Admin
+              <Lock className="size-3.5" /> Admin
             </Link>
           </div>
         </div>
