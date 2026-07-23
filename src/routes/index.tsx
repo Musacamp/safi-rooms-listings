@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
-import { ShieldCheck, Phone, MessageCircle } from "lucide-react";
+import { ShieldCheck, Phone, MessageCircle, Lock } from "lucide-react";
 import { getFeaturedListings, getPublicStats, listListings } from "@/lib/listings.functions";
 import { ListingCard } from "@/components/ListingCard";
 import { FeaturedCard } from "@/components/FeaturedCard";
@@ -88,9 +88,10 @@ function Home() {
             <ThemeToggle />
             <Link
               to="/admin"
-              className="hidden rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground ring-1 ring-border sm:inline-flex"
+              aria-label="Admin sign in"
+              className="inline-flex items-center gap-1 rounded-lg bg-secondary px-2.5 py-1.5 text-xs font-medium text-secondary-foreground ring-1 ring-border"
             >
-              Admin
+              <Lock className="size-3.5" /> Admin
             </Link>
           </div>
         </div>
