@@ -32,7 +32,7 @@ function AdminLayout() {
           <div className="flex items-center gap-2">
             <Link
               to="/"
-              className="hidden items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground ring-1 ring-border sm:inline-flex"
+              className="inline-flex items-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground ring-1 ring-border"
             >
               <Home className="size-3.5" /> View site
             </Link>
