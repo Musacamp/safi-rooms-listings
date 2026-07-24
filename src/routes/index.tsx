@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { z } from "zod";
 import { ShieldCheck, Phone, MessageCircle, Lock } from "lucide-react";
 import { getFeaturedListings, getPublicStats, listListings } from "@/lib/listings.functions";
+import { logSiteVisitOnce } from "@/lib/track";
 import { ListingCard } from "@/components/ListingCard";
 import { FeaturedCard } from "@/components/FeaturedCard";
 import { FilterBar } from "@/components/FilterBar";
@@ -16,6 +18,7 @@ const searchSchema = z.object({
   location: z.string().optional(),
   min: z.number().optional(),
   max: z.number().optional(),
+  recent: z.boolean().optional(),
 });
 
 const featuredOpts = queryOptions({
