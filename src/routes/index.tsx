@@ -132,7 +132,7 @@ function Home() {
 
         <FilterBar />
 
-        {featured.length > 0 && !search.type && !search.q && (
+        {featured.length > 0 && !search.type && !search.q && !search.recent && (
           <section className="mb-3">
             <div className="mb-2 flex items-center justify-between px-4">
               <h2 className="text-sm font-semibold text-foreground">Featured</h2>
@@ -149,7 +149,9 @@ function Home() {
         <section className="px-4">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground">
+              {search.recent ? "Newly Added · " : ""}
               {rows.length} {rows.length === 1 ? "listing" : "listings"}
+              {search.recent ? " in the last 5 days" : ""}
             </h2>
           </div>
           {rows.length === 0 ? (
