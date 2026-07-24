@@ -201,6 +201,28 @@ export function ListingForm({
               onChange={(e) => setField("deposit_ugx", Number(e.target.value) || 0)}
               className="input"
             />
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {[3, 4, 5, 6].map((n) => {
+                const amount = (values.rent_ugx || 0) * n;
+                const active = amount > 0 && values.deposit_ugx === amount;
+                return (
+                  <button
+                    type="button"
+                    key={n}
+                    onClick={() => setField("deposit_ugx", amount)}
+                    disabled={!values.rent_ugx}
+                    className={
+                      "rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ring-border disabled:opacity-40 " +
+                      (active
+                        ? "bg-brand-blue text-white"
+                        : "bg-secondary text-secondary-foreground")
+                    }
+                  >
+                    {n} months
+                  </button>
+                );
+              })}
+            </div>
           </Field>
         </div>
         <Field label="Room type">
