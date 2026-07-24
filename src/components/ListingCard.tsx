@@ -3,13 +3,12 @@ import { Phone, MessageCircle, MapPin, ShieldCheck } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { formatUGX, relativeDate } from "@/lib/format";
 import { ROOM_TYPE_LABEL, AMENITY_LABEL, TEL_URL, WHATSAPP_URL } from "@/lib/constants";
-import { useServerFn } from "@tanstack/react-start";
-import { trackListingEvent } from "@/lib/listings.functions";
+import { track } from "@/lib/track";
+import { NotifyMeButton } from "./NotifyMeButton";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
 export function ListingCard({ listing }: { listing: Listing }) {
-  const track = useServerFn(trackListingEvent);
   const cover = listing.photos?.[0];
   const amenityKeys = (listing.amenities ?? []).slice(0, 4);
   const statusChip = listing.is_available ? (
@@ -28,7 +27,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         params={{ id: listing.id }}
         className="flex min-w-0 gap-3"
         onClick={() => {
-          track({ data: { listing_id: listing.id, kind: "view" } }).catch(() => {});
+          track({ listing_id: listing.id, kind: "view" });
         }}
       >
         <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-muted ring-1 ring-border">
@@ -60,6 +59,11 @@ export function ListingCard({ listing }: { listing: Listing }) {
             Deposit: {formatUGX(listing.deposit_ugx)} · {ROOM_TYPE_LABEL[listing.room_type]} ·{" "}
             {relativeDate(listing.posted_at)}
           </div>
+          <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+            <span>👁 {listing.views_count} views</span>
+            <span>📞 {listing.calls_count}</span>
+            <span>💬 {listing.whatsapp_count}</span>
+          </div>
         </div>
       </Link>
       <div className="flex items-center justify-between border-t border-border pt-3">
@@ -74,27 +78,29 @@ export function ListingCard({ listing }: { listing: Listing }) {
           ))}
         </div>
         <div className="flex gap-2">
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noreferrer"
-            onClick={() =>
-              track({ data: { listing_id: listing.id, kind: "whatsapp" } }).catch(() => {})
-            }
-            aria-label="WhatsApp"
-            className="grid size-9 place-items-center rounded-lg bg-brand-green text-white ring-1 ring-brand-green"
-          >
-            <MessageCircle className="size-4" />
-          </a>
-          <a
-            href={TEL_URL}
-            onClick={() =>
-              track({ data: { listing_id: listing.id, kind: "call" } }).catch(() => {})
-            }
-            className="flex items-center gap-2 rounded-lg bg-action px-3 py-2 text-sm font-medium text-white ring-1 ring-action"
-          >
-            <Phone className="size-4" /> Call Now
-          </a>
+          {listing.is_available ? (
+            <>
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => track({ listing_id: listing.id, kind: "whatsapp" })}
+                aria-label="WhatsApp"
+                className="grid size-9 place-items-center rounded-lg bg-brand-green text-white ring-1 ring-brand-green"
+              >
+                <MessageCircle className="size-4" />
+              </a>
+              <a
+                href={TEL_URL}
+                onClick={() => track({ listing_id: listing.id, kind: "call" })}
+                className="flex items-center gap-2 rounded-lg bg-action px-3 py-2 text-sm font-medium text-white ring-1 ring-action"
+              >
+                <Phone className="size-4" /> Call Now
+              </a>
+            </>
+          ) : (
+            <NotifyMeButton listingId={listing.id} compact />
+          )}
         </div>
       </div>
     </div>

@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Lock } from "lucide-react";
 import { bootstrapAdmin } from "@/lib/admin-bootstrap.functions";
+import { resetAdminCache } from "@/lib/track";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -18,7 +19,6 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const nav = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,26 +33,31 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin + "/auth" },
-        });
-        if (error) throw error;
-      }
-      // Attempt to bootstrap as first admin (no-op if admins already exist)
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      // If no admin exists yet, allow the first sign-in to bootstrap.
       try {
         const res = await bootstrapAdmin();
         if (res.bootstrapped) toast.success("You are now the admin");
       } catch {}
-      toast.success(mode === "signin" ? "Signed in" : "Account created");
+      // Verify this user is an admin; otherwise sign out.
+      const uid = data.user?.id;
+      if (uid) {
+        const { data: adminRow } = await supabase
+          .from("admins")
+          .select("user_id")
+          .eq("user_id", uid)
+          .maybeSingle();
+        if (!adminRow) {
+          await supabase.auth.signOut();
+          throw new Error("This account is not authorized for admin access.");
+        }
+      }
+      resetAdminCache();
+      toast.success("Signed in");
       nav({ to: "/admin" });
     } catch (e: any) {
-      toast.error(e.message ?? "Auth failed");
+      toast.error(e.message ?? "Sign in failed");
     } finally {
       setLoading(false);
     }
@@ -72,27 +77,8 @@ function AuthPage() {
             </div>
           </div>
         </div>
-        <div className="mb-3 flex gap-1 rounded-lg bg-secondary p-1 text-xs font-medium">
-          <button
-            type="button"
-            onClick={() => setMode("signin")}
-            className={
-              "flex-1 rounded-md py-1.5 " +
-              (mode === "signin" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")
-            }
-          >
-            Sign in
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("signup")}
-            className={
-              "flex-1 rounded-md py-1.5 " +
-              (mode === "signup" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")
-            }
-          >
-            Create account
-          </button>
+        <div className="mb-3 flex items-center gap-1.5 rounded-lg bg-amber-500/10 px-3 py-2 text-[11px] font-medium text-amber-700 dark:text-amber-300">
+          <Lock className="size-3.5" /> Authorized admins only
         </div>
         <form onSubmit={submit} className="flex flex-col gap-3">
           <label className="text-xs font-medium text-muted-foreground">
@@ -100,6 +86,7 @@ function AuthPage() {
             <input
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 w-full rounded-lg bg-secondary px-3 py-2 text-sm text-foreground outline-none ring-1 ring-border"
@@ -111,6 +98,7 @@ function AuthPage() {
               type="password"
               required
               minLength={6}
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded-lg bg-secondary px-3 py-2 text-sm text-foreground outline-none ring-1 ring-border"
@@ -121,18 +109,12 @@ function AuthPage() {
             disabled={loading}
             className="mt-2 rounded-lg bg-brand-blue py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {loading
-              ? "Please wait..."
-              : mode === "signin"
-                ? "Sign in"
-                : "Create admin account"}
+            {loading ? "Please wait..." : "Sign in"}
           </button>
         </form>
-        {mode === "signup" && (
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            The first account created becomes the admin automatically.
-          </p>
-        )}
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          New admin accounts can only be provisioned by the system owner.
+        </p>
       </div>
     </div>
   );
