@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { ROOM_TYPES } from "@/lib/constants";
 
@@ -11,6 +11,7 @@ export function FilterBar() {
     location?: string;
     min?: number;
     max?: number;
+    recent?: boolean;
   };
   const [open, setOpen] = useState(false);
   const [loc, setLoc] = useState(search.location ?? "");
@@ -18,7 +19,16 @@ export function FilterBar() {
   const [max, setMax] = useState(search.max?.toString() ?? "");
 
   const setChip = (type: string | undefined) => {
-    nav({ search: (prev: Record<string, unknown>) => ({ ...prev, type }) as never });
+    nav({
+      search: (prev: Record<string, unknown>) =>
+        ({ ...prev, type, recent: undefined }) as never,
+    });
+  };
+  const setRecent = () => {
+    nav({
+      search: (prev: Record<string, unknown>) =>
+        ({ ...prev, recent: true, type: undefined }) as never,
+    });
   };
   const setQ = (q: string) => {
     nav({ search: (prev: Record<string, unknown>) => ({ ...prev, q: q || undefined }) as never });
@@ -43,7 +53,8 @@ export function FilterBar() {
   };
 
   const activeType = search.type;
-  const hasAdvanced = !!(search.location || search.min || search.max || search.q);
+  const isRecent = !!search.recent;
+  const hasAdvanced = !!(search.location || search.min || search.max || search.q || search.recent);
 
   return (
     <>
@@ -79,8 +90,13 @@ export function FilterBar() {
         )}
       </div>
       <div className="flex gap-2 overflow-x-auto px-4 pb-3 no-scrollbar">
-        <Chip active={!activeType} onClick={() => setChip(undefined)}>
+        <Chip active={!activeType && !isRecent} onClick={() => setChip(undefined)}>
           All Rooms
+        </Chip>
+        <Chip active={isRecent} onClick={setRecent}>
+          <span className="inline-flex items-center gap-1">
+            <Sparkles className="size-3.5" /> Newly Added
+          </span>
         </Chip>
         {ROOM_TYPES.map((t) => (
           <Chip key={t.value} active={activeType === t.value} onClick={() => setChip(t.value)}>

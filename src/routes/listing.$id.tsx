@@ -12,9 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
-import { getListing, getSimilarListings, trackListingEvent } from "@/lib/listings.functions";
+import { getListing, getSimilarListings } from "@/lib/listings.functions";
+import { track } from "@/lib/track";
 import { ListingCard } from "@/components/ListingCard";
+import { NotifyMeButton } from "@/components/NotifyMeButton";
 import { formatUGX, relativeDate } from "@/lib/format";
 import {
   AMENITY_LABEL,
@@ -46,8 +47,7 @@ export const Route = createFileRoute("/listing/$id")({
     if (!l) throw notFound();
     context.queryClient.ensureQueryData(similarOpts(params.id));
   },
-  head: ({ loaderData, params }) => {
-    // loaderData here is undefined since we returned nothing; keep generic fallback
+  head: ({ loaderData }) => {
     void loaderData;
     return {
       meta: [
@@ -64,16 +64,16 @@ function ListingPage() {
   const { id } = Route.useParams();
   const { data: listing } = useSuspenseQuery(listingOpts(id));
   const { data: similar } = useQuery(similarOpts(id));
-  const track = useServerFn(trackListingEvent);
   const [photoIdx, setPhotoIdx] = useState(0);
 
   useEffect(() => {
-    track({ data: { listing_id: id, kind: "view" } }).catch(() => {});
-  }, [id, track]);
+    track({ listing_id: id, kind: "view" });
+  }, [id]);
 
   if (!listing) return null;
   const photos = listing.photos ?? [];
   const currentPhoto = photos[photoIdx];
+  const occupied = !listing.is_available;
 
   return (
     <div className="min-h-screen bg-surface pb-24">
@@ -162,6 +162,12 @@ function ListingPage() {
               </span>
             )}
           </div>
+
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
+            <span>👁 {listing.views_count} views</span>
+            <span>📞 {listing.calls_count} calls</span>
+            <span>💬 {listing.whatsapp_count} WhatsApp</span>
+          </div>
         </section>
 
         <section className="px-4 pt-6">
@@ -188,30 +194,43 @@ function ListingPage() {
         )}
 
         <section className="px-4 pt-6">
-          <h2 className="mb-2 text-sm font-semibold text-foreground">Contact agent</h2>
+          <h2 className="mb-2 text-sm font-semibold text-foreground">
+            {occupied ? "This room is occupied" : "Contact agent"}
+          </h2>
           <div className="rounded-2xl bg-card p-4 ring-1 ring-border">
-            <div className="text-xs text-muted-foreground">SafiRooms agent</div>
-            <div className="text-base font-semibold text-foreground">{CONTACT_PHONE_DISPLAY}</div>
-            <div className="mt-3 flex gap-2">
-              <a
-                href={TEL_URL}
-                onClick={() => track({ data: { listing_id: id, kind: "call" } }).catch(() => {})}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-action px-3 py-2.5 text-sm font-semibold text-white"
-              >
-                <Phone className="size-4" /> Call now
-              </a>
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() =>
-                  track({ data: { listing_id: id, kind: "whatsapp" } }).catch(() => {})
-                }
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-green px-3 py-2.5 text-sm font-semibold text-white"
-              >
-                <MessageCircle className="size-4" /> WhatsApp
-              </a>
-            </div>
+            {occupied ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Get notified as soon as this room becomes available again.
+                </p>
+                <div className="mt-3">
+                  <NotifyMeButton listingId={listing.id} className="w-full justify-center" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-xs text-muted-foreground">SafiRooms agent</div>
+                <div className="text-base font-semibold text-foreground">{CONTACT_PHONE_DISPLAY}</div>
+                <div className="mt-3 flex gap-2">
+                  <a
+                    href={TEL_URL}
+                    onClick={() => track({ listing_id: id, kind: "call" })}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-action px-3 py-2.5 text-sm font-semibold text-white"
+                  >
+                    <Phone className="size-4" /> Call now
+                  </a>
+                  <a
+                    href={WHATSAPP_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => track({ listing_id: id, kind: "whatsapp" })}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-green px-3 py-2.5 text-sm font-semibold text-white"
+                  >
+                    <MessageCircle className="size-4" /> WhatsApp
+                  </a>
+                </div>
+              </>
+            )}
           </div>
         </section>
 
@@ -229,22 +248,28 @@ function ListingPage() {
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-2 backdrop-blur">
         <div className="mx-auto flex max-w-3xl gap-2">
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noreferrer"
-            onClick={() => track({ data: { listing_id: id, kind: "whatsapp" } }).catch(() => {})}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-green px-3 py-2.5 text-sm font-semibold text-white"
-          >
-            <MessageCircle className="size-4" /> WhatsApp
-          </a>
-          <a
-            href={TEL_URL}
-            onClick={() => track({ data: { listing_id: id, kind: "call" } }).catch(() => {})}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-action px-3 py-2.5 text-sm font-semibold text-white"
-          >
-            <Phone className="size-4" /> Call agent
-          </a>
+          {occupied ? (
+            <NotifyMeButton listingId={listing.id} className="flex-1 justify-center" />
+          ) : (
+            <>
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => track({ listing_id: id, kind: "whatsapp" })}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-green px-3 py-2.5 text-sm font-semibold text-white"
+              >
+                <MessageCircle className="size-4" /> WhatsApp
+              </a>
+              <a
+                href={TEL_URL}
+                onClick={() => track({ listing_id: id, kind: "call" })}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-action px-3 py-2.5 text-sm font-semibold text-white"
+              >
+                <Phone className="size-4" /> Call agent
+              </a>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -121,6 +121,56 @@ export type Database = {
         }
         Relationships: []
       }
+      site_visits: {
+        Row: {
+          created_at: string
+          id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
+      waitlist: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          name: string
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
