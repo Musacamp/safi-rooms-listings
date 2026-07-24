@@ -68,6 +68,10 @@ function Home() {
   const { data: stats } = useSuspenseQuery(statsOpts);
   const { data: listings } = useQuery(listingsOpts(search));
 
+  useEffect(() => {
+    logSiteVisitOnce();
+  }, []);
+
   const rows = listings ?? [];
 
   return (
