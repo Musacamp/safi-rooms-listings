@@ -75,6 +75,7 @@ const filtersSchema = z
     min: z.number().optional(),
     max: z.number().optional(),
     q: z.string().optional(),
+    recent: z.boolean().optional(),
   })
   .default({});
 
@@ -92,6 +93,10 @@ export const listListings = createServerFn({ method: "GET" })
     if (typeof data.min === "number") q = q.gte("rent_ugx", data.min);
     if (typeof data.max === "number") q = q.lte("rent_ugx", data.max);
     if (data.q) q = q.or(`title.ilike.%${data.q}%,description.ilike.%${data.q}%,location.ilike.%${data.q}%`);
+    if (data.recent) {
+      const since = new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString();
+      q = q.gte("posted_at", since);
+    }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     return resolveListings(sb, rows ?? []);
