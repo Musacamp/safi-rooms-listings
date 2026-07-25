@@ -45,13 +45,13 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "SafiRooms — Safi Verified rooms in Uganda" },
+      { title: "SafiRooms" },
       {
         name: "description",
         content:
           "Browse trusted rental listings across Uganda. Filter by room type, location, and rent. Call or WhatsApp to book instantly.",
       },
-      { property: "og:title", content: "SafiRooms — Safi Verified rooms in Uganda" },
+      { property: "og:title", content: "SafiRooms" },
       {
         property: "og:description",
         content:
