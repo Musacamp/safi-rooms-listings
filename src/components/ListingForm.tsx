@@ -201,37 +201,50 @@ export function ListingForm({
             />
           </Field>
           <Field label="Deposit (UGX)">
-            <input
-              type="number"
-              min={0}
-              value={values.deposit_ugx || ""}
-              onChange={(e) => setField("deposit_ugx", Number(e.target.value) || 0)}
-              className="input"
-            />
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {[3, 4, 5, 6].map((n) => {
-                const amount = (values.rent_ugx || 0) * n;
-                const active = amount > 0 && values.deposit_ugx === amount;
-                return (
-                  <button
-                    type="button"
-                    key={n}
-                    onClick={() => setField("deposit_ugx", amount)}
-                    disabled={!values.rent_ugx}
-                    className={
-                      "rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ring-border disabled:opacity-40 " +
-                      (active
-                        ? "bg-brand-blue text-white"
-                        : "bg-secondary text-secondary-foreground")
-                    }
-                  >
-                    {n} months
-                  </button>
-                );
-              })}
-            </div>
+            <button
+              type="button"
+              onClick={() => setDepositOpen(true)}
+              className="input flex items-center justify-between text-left"
+            >
+              <span className={values.deposit_ugx ? "" : "text-muted-foreground"}>
+                {values.deposit_ugx ? formatUGX(values.deposit_ugx) : "Tap to choose deposit"}
+              </span>
+              <ChevronDown className="size-4 text-muted-foreground" />
+            </button>
+            {values.deposit_ugx > 0 && values.rent_ugx > 0 && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                ≈ {(values.deposit_ugx / values.rent_ugx).toFixed(1)} months rent
+              </p>
+            )}
           </Field>
         </div>
+        <Field label="Vacancies (rooms left in compound)">
+          <input
+            type="number"
+            min={0}
+            value={values.vacancies}
+            onChange={(e) => setField("vacancies", Math.max(0, Number(e.target.value) || 0))}
+            className="input"
+          />
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                type="button"
+                key={n}
+                onClick={() => setField("vacancies", n)}
+                className={
+                  "rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ring-border " +
+                  (values.vacancies === n
+                    ? "bg-brand-blue text-white"
+                    : "bg-secondary text-secondary-foreground")
+                }
+              >
+                {n} left
+              </button>
+            ))}
+          </div>
+        </Field>
+
         <Field label="Room type">
           <select
             value={values.room_type}
