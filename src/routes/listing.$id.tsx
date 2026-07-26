@@ -124,7 +124,13 @@ function ListingPage() {
                     }
                   />
                 ))}
-              </div>
+          {listing.is_available && listing.vacancies > 0 && (
+            <span className="absolute left-3 top-3 rounded-lg bg-brand-green px-2.5 py-1 text-xs font-semibold text-white shadow">
+              {listing.vacancies} left
+            </span>
+          )}
+        </div>
+
             </>
           )}
         </div>
@@ -163,12 +169,8 @@ function ListingPage() {
             )}
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-            <span>👁 {listing.views_count} views</span>
-            <span>📞 {listing.calls_count} calls</span>
-            <span>💬 {listing.whatsapp_count} WhatsApp</span>
-          </div>
         </section>
+
 
         <section className="px-4 pt-6">
           <h2 className="mb-2 text-sm font-semibold text-foreground">Description</h2>
