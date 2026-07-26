@@ -28,7 +28,9 @@ const listingInput = z.object({
   room_type: z.enum(["single", "double", "self_contained", "apartment", "business"]),
   rent_ugx: z.number().int().nonnegative(),
   deposit_ugx: z.number().int().nonnegative().default(0),
+  vacancies: z.number().int().min(0).max(999).default(1),
   is_available: z.boolean().default(true),
+
   is_featured: z.boolean().default(false),
   amenities: z.array(z.string()).default([]),
   photos: z.array(z.string()).default([]),

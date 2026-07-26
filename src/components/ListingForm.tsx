@@ -14,11 +14,13 @@ export type ListingFormValues = {
   room_type: RoomTypeValue;
   rent_ugx: number;
   deposit_ugx: number;
+  vacancies: number;
   is_available: boolean;
   is_featured: boolean;
   amenities: string[];
   photos: string[];
 };
+
 
 const BUCKET = "listing-photos";
 
