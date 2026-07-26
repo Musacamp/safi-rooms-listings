@@ -76,6 +76,7 @@ export type Database = {
           room_type: Database["public"]["Enums"]["room_type"]
           title: string
           updated_at: string
+          vacancies: number
           views_count: number
           whatsapp_count: number
         }
@@ -96,6 +97,7 @@ export type Database = {
           room_type: Database["public"]["Enums"]["room_type"]
           title: string
           updated_at?: string
+          vacancies?: number
           views_count?: number
           whatsapp_count?: number
         }
@@ -116,6 +118,7 @@ export type Database = {
           room_type?: Database["public"]["Enums"]["room_type"]
           title?: string
           updated_at?: string
+          vacancies?: number
           views_count?: number
           whatsapp_count?: number
         }
