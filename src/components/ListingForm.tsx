@@ -38,7 +38,9 @@ export function ListingForm({
     room_type: (initial?.room_type ?? "single") as RoomTypeValue,
     rent_ugx: initial?.rent_ugx ?? 0,
     deposit_ugx: initial?.deposit_ugx ?? 0,
+    vacancies: initial?.vacancies ?? 1,
     is_available: initial?.is_available ?? true,
+
     is_featured: initial?.is_featured ?? false,
     amenities: initial?.amenities ?? [],
     photos: initial?.photos ?? [],
@@ -46,6 +48,9 @@ export function ListingForm({
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [customDeposit, setCustomDeposit] = useState("");
+
 
   // Resolve preview URLs for storage-path photos
   const ensurePreview = async (paths: string[]) => {
