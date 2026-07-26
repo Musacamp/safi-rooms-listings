@@ -66,9 +66,8 @@ export function ListingCard({ listing }: { listing: Listing }) {
             {relativeDate(listing.posted_at)}
           </div>
         </div>
-
-        </div>
       </Link>
+
       <div className="flex items-center justify-between border-t border-border pt-3">
         <div className="flex flex-wrap gap-1">
           {amenityKeys.map((a) => (
