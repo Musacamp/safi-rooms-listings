@@ -14,11 +14,17 @@ export function FeaturedCard({ listing }: { listing: Listing }) {
       params={{ id: listing.id }}
       className="block min-w-[260px] overflow-hidden rounded-2xl bg-card p-2 ring-1 ring-border"
     >
-      <div className="aspect-[4/3] w-full overflow-hidden rounded-xl bg-muted ring-1 ring-border">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-muted ring-1 ring-border">
         {cover ? (
           <img src={cover} alt={listing.title} loading="lazy" className="size-full object-cover" />
         ) : null}
+        {listing.is_available && listing.vacancies > 0 && (
+          <span className="absolute left-2 top-2 rounded-md bg-brand-green px-2 py-0.5 text-[11px] font-semibold text-white shadow">
+            {listing.vacancies} left
+          </span>
+        )}
       </div>
+
       <div className="p-2">
         <div className="mb-1 flex items-center gap-1.5">
           <ShieldCheck className="size-3 text-brand-green" />

@@ -3,7 +3,9 @@ import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { AMENITY_LABEL, AMENITY_OPTIONS, ROOM_TYPES, type RoomTypeValue } from "@/lib/constants";
-import { X, Upload, Loader2, ArrowLeft, ArrowRight, Star } from "lucide-react";
+import { formatUGX } from "@/lib/format";
+import { X, Upload, Loader2, ArrowLeft, ArrowRight, Star, ChevronDown } from "lucide-react";
+
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
@@ -14,11 +16,13 @@ export type ListingFormValues = {
   room_type: RoomTypeValue;
   rent_ugx: number;
   deposit_ugx: number;
+  vacancies: number;
   is_available: boolean;
   is_featured: boolean;
   amenities: string[];
   photos: string[];
 };
+
 
 const BUCKET = "listing-photos";
 
@@ -36,7 +40,9 @@ export function ListingForm({
     room_type: (initial?.room_type ?? "single") as RoomTypeValue,
     rent_ugx: initial?.rent_ugx ?? 0,
     deposit_ugx: initial?.deposit_ugx ?? 0,
+    vacancies: initial?.vacancies ?? 1,
     is_available: initial?.is_available ?? true,
+
     is_featured: initial?.is_featured ?? false,
     amenities: initial?.amenities ?? [],
     photos: initial?.photos ?? [],
@@ -44,6 +50,9 @@ export function ListingForm({
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [customDeposit, setCustomDeposit] = useState("");
+
 
   // Resolve preview URLs for storage-path photos
   const ensurePreview = async (paths: string[]) => {
@@ -194,37 +203,50 @@ export function ListingForm({
             />
           </Field>
           <Field label="Deposit (UGX)">
-            <input
-              type="number"
-              min={0}
-              value={values.deposit_ugx || ""}
-              onChange={(e) => setField("deposit_ugx", Number(e.target.value) || 0)}
-              className="input"
-            />
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {[3, 4, 5, 6].map((n) => {
-                const amount = (values.rent_ugx || 0) * n;
-                const active = amount > 0 && values.deposit_ugx === amount;
-                return (
-                  <button
-                    type="button"
-                    key={n}
-                    onClick={() => setField("deposit_ugx", amount)}
-                    disabled={!values.rent_ugx}
-                    className={
-                      "rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ring-border disabled:opacity-40 " +
-                      (active
-                        ? "bg-brand-blue text-white"
-                        : "bg-secondary text-secondary-foreground")
-                    }
-                  >
-                    {n} months
-                  </button>
-                );
-              })}
-            </div>
+            <button
+              type="button"
+              onClick={() => setDepositOpen(true)}
+              className="input flex items-center justify-between text-left"
+            >
+              <span className={values.deposit_ugx ? "" : "text-muted-foreground"}>
+                {values.deposit_ugx ? formatUGX(values.deposit_ugx) : "Tap to choose deposit"}
+              </span>
+              <ChevronDown className="size-4 text-muted-foreground" />
+            </button>
+            {values.deposit_ugx > 0 && values.rent_ugx > 0 && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                ≈ {(values.deposit_ugx / values.rent_ugx).toFixed(1)} months rent
+              </p>
+            )}
           </Field>
         </div>
+        <Field label="Vacancies (rooms left in compound)">
+          <input
+            type="number"
+            min={0}
+            value={values.vacancies}
+            onChange={(e) => setField("vacancies", Math.max(0, Number(e.target.value) || 0))}
+            className="input"
+          />
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                type="button"
+                key={n}
+                onClick={() => setField("vacancies", n)}
+                className={
+                  "rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ring-border " +
+                  (values.vacancies === n
+                    ? "bg-brand-blue text-white"
+                    : "bg-secondary text-secondary-foreground")
+                }
+              >
+                {n} left
+              </button>
+            ))}
+          </div>
+        </Field>
+
         <Field label="Room type">
           <select
             value={values.room_type}
@@ -395,6 +417,87 @@ export function ListingForm({
       >
         {saving ? "Saving..." : "Save listing"}
       </button>
+
+      {depositOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+          onClick={() => setDepositOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-t-2xl bg-card p-4 ring-1 ring-border sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">Choose deposit</h3>
+              <button
+                type="button"
+                onClick={() => setDepositOpen(false)}
+                className="grid size-8 place-items-center rounded-lg bg-secondary text-secondary-foreground"
+                aria-label="Close"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            {values.rent_ugx > 0 ? (
+              <div className="flex flex-col gap-2">
+                {[3, 4, 5, 6].map((n) => {
+                  const amount = values.rent_ugx * n;
+                  const active = values.deposit_ugx === amount;
+                  return (
+                    <button
+                      type="button"
+                      key={n}
+                      onClick={() => {
+                        setField("deposit_ugx", amount);
+                        setDepositOpen(false);
+                      }}
+                      className={
+                        "flex items-center justify-between rounded-xl px-3 py-3 text-sm font-medium ring-1 ring-border " +
+                        (active
+                          ? "bg-brand-blue text-white"
+                          : "bg-secondary text-secondary-foreground")
+                      }
+                    >
+                      <span>{n} months</span>
+                      <span className="font-semibold">{formatUGX(amount)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Enter the monthly rent first, then choose a deposit.
+              </p>
+            )}
+            <div className="mt-3 border-t border-border pt-3">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                Custom amount (UGX)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  value={customDeposit}
+                  onChange={(e) => setCustomDeposit(e.target.value)}
+                  className="input"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setField("deposit_ugx", Math.max(0, Number(customDeposit) || 0));
+                    setCustomDeposit("");
+                    setDepositOpen(false);
+                  }}
+                  className="shrink-0 rounded-lg bg-brand-blue px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Set
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       <style>{`
         .input {

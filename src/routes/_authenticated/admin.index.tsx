@@ -16,12 +16,17 @@ function AdminHome() {
     queryKey: ["admin-stats"],
     queryFn: () => getAdminStats(),
     enabled: !!adminCheck.data?.isAdmin,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
   const listings = useQuery({
     queryKey: ["admin-listings"],
     queryFn: () => adminListListings(),
     enabled: !!adminCheck.data?.isAdmin,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
+
   const visitors = useQuery({
     queryKey: ["visitor-stats"],
     queryFn: () => getVisitorStats(),
@@ -51,10 +56,13 @@ function AdminHome() {
   const s = stats.data;
   const v = visitors.data;
   const recent = (listings.data ?? []).slice(0, 5);
+  const engagement = (l: { views_count: number; calls_count: number; whatsapp_count: number }) =>
+    l.views_count + l.calls_count + l.whatsapp_count;
   const topListings = [...(listings.data ?? [])]
     .filter((l) => !l.is_archived)
-    .sort((a, b) => b.views_count - a.views_count)
+    .sort((a, b) => engagement(b) - engagement(a))
     .slice(0, 5);
+
 
   const maxHourly = Math.max(1, ...(v?.hourly ?? []).map((h) => h.visits));
 
@@ -151,11 +159,15 @@ function AdminHome() {
                     <span className="inline-flex items-center gap-1">
                       <MessageCircle className="size-3" /> {l.whatsapp_count}
                     </span>
+                    <span className="font-semibold text-foreground">
+                      {engagement(l)} total
+                    </span>
                   </div>
                 </div>
                 <div className="text-sm font-semibold text-brand-blue">
                   {formatUGX(l.rent_ugx)}
                 </div>
+
               </Link>
             ))
           )}
