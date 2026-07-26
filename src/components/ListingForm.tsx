@@ -3,7 +3,9 @@ import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { AMENITY_LABEL, AMENITY_OPTIONS, ROOM_TYPES, type RoomTypeValue } from "@/lib/constants";
-import { X, Upload, Loader2, ArrowLeft, ArrowRight, Star } from "lucide-react";
+import { formatUGX } from "@/lib/format";
+import { X, Upload, Loader2, ArrowLeft, ArrowRight, Star, ChevronDown } from "lucide-react";
+
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
