@@ -38,7 +38,13 @@ export function ListingCard({ listing }: { listing: Listing }) {
               No photo
             </div>
           )}
+          {listing.is_available && listing.vacancies > 0 && (
+            <span className="absolute left-1 top-1 rounded-md bg-brand-green px-1.5 py-0.5 text-[10px] font-semibold text-white shadow">
+              {listing.vacancies} left
+            </span>
+          )}
         </div>
+
         <div className="min-w-0 flex-1">
           <div className="mb-0.5 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
@@ -59,11 +65,8 @@ export function ListingCard({ listing }: { listing: Listing }) {
             Deposit: {formatUGX(listing.deposit_ugx)} · {ROOM_TYPE_LABEL[listing.room_type]} ·{" "}
             {relativeDate(listing.posted_at)}
           </div>
-          <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
-            <span>👁 {listing.views_count} views</span>
-            <span>📞 {listing.calls_count}</span>
-            <span>💬 {listing.whatsapp_count}</span>
-          </div>
+        </div>
+
         </div>
       </Link>
       <div className="flex items-center justify-between border-t border-border pt-3">
