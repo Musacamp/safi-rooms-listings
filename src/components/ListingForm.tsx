@@ -418,6 +418,87 @@ export function ListingForm({
         {saving ? "Saving..." : "Save listing"}
       </button>
 
+      {depositOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+          onClick={() => setDepositOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-t-2xl bg-card p-4 ring-1 ring-border sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">Choose deposit</h3>
+              <button
+                type="button"
+                onClick={() => setDepositOpen(false)}
+                className="grid size-8 place-items-center rounded-lg bg-secondary text-secondary-foreground"
+                aria-label="Close"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            {values.rent_ugx > 0 ? (
+              <div className="flex flex-col gap-2">
+                {[3, 4, 5, 6].map((n) => {
+                  const amount = values.rent_ugx * n;
+                  const active = values.deposit_ugx === amount;
+                  return (
+                    <button
+                      type="button"
+                      key={n}
+                      onClick={() => {
+                        setField("deposit_ugx", amount);
+                        setDepositOpen(false);
+                      }}
+                      className={
+                        "flex items-center justify-between rounded-xl px-3 py-3 text-sm font-medium ring-1 ring-border " +
+                        (active
+                          ? "bg-brand-blue text-white"
+                          : "bg-secondary text-secondary-foreground")
+                      }
+                    >
+                      <span>{n} months</span>
+                      <span className="font-semibold">{formatUGX(amount)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Enter the monthly rent first, then choose a deposit.
+              </p>
+            )}
+            <div className="mt-3 border-t border-border pt-3">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                Custom amount (UGX)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  value={customDeposit}
+                  onChange={(e) => setCustomDeposit(e.target.value)}
+                  className="input"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setField("deposit_ugx", Math.max(0, Number(customDeposit) || 0));
+                    setCustomDeposit("");
+                    setDepositOpen(false);
+                  }}
+                  className="shrink-0 rounded-lg bg-brand-blue px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Set
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       <style>{`
         .input {
           width: 100%;
