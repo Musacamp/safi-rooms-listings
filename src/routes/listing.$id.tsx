@@ -124,6 +124,9 @@ function ListingPage() {
                     }
                   />
                 ))}
+              </div>
+            </>
+          )}
           {listing.is_available && listing.vacancies > 0 && (
             <span className="absolute left-3 top-3 rounded-lg bg-brand-green px-2.5 py-1 text-xs font-semibold text-white shadow">
               {listing.vacancies} left
@@ -131,9 +134,6 @@ function ListingPage() {
           )}
         </div>
 
-            </>
-          )}
-        </div>
 
         <section className="px-4 pt-4">
           <div className="flex items-center gap-1.5">
