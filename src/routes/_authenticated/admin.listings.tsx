@@ -17,7 +17,13 @@ export const Route = createFileRoute("/_authenticated/admin/listings")({
 
 function AdminListings() {
   const qc = useQueryClient();
-  const listings = useQuery({ queryKey: ["admin-listings"], queryFn: () => adminListListings() });
+  const listings = useQuery({
+    queryKey: ["admin-listings"],
+    queryFn: () => adminListListings(),
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  });
+
   const [filter, setFilter] = useState<"all" | "active" | "archived">("all");
 
   const invalidate = () => {

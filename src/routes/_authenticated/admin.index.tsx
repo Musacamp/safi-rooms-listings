@@ -16,12 +16,17 @@ function AdminHome() {
     queryKey: ["admin-stats"],
     queryFn: () => getAdminStats(),
     enabled: !!adminCheck.data?.isAdmin,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
   const listings = useQuery({
     queryKey: ["admin-listings"],
     queryFn: () => adminListListings(),
     enabled: !!adminCheck.data?.isAdmin,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
+
   const visitors = useQuery({
     queryKey: ["visitor-stats"],
     queryFn: () => getVisitorStats(),
