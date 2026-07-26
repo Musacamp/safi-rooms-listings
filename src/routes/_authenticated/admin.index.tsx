@@ -159,11 +159,15 @@ function AdminHome() {
                     <span className="inline-flex items-center gap-1">
                       <MessageCircle className="size-3" /> {l.whatsapp_count}
                     </span>
+                    <span className="font-semibold text-foreground">
+                      {engagement(l)} total
+                    </span>
                   </div>
                 </div>
                 <div className="text-sm font-semibold text-brand-blue">
                   {formatUGX(l.rent_ugx)}
                 </div>
+
               </Link>
             ))
           )}
