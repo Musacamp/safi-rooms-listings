@@ -25,6 +25,8 @@ import {
   CONTACT_PHONE_DISPLAY,
 } from "@/lib/constants";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ShareListingButton } from "@/components/ShareListingButton";
+
 
 const listingOpts = (id: string) =>
   queryOptions({
@@ -85,9 +87,13 @@ function ListingPage() {
           >
             <ArrowLeft className="size-4" /> Back
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ShareListingButton listing={listing} className="px-2.5 py-1.5 text-xs" />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
+
 
       <div className="mx-auto max-w-3xl">
         <div className="relative aspect-[4/3] w-full bg-muted sm:mt-4 sm:rounded-2xl sm:mx-4 sm:aspect-[16/9] overflow-hidden">
