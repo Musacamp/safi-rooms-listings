@@ -11,6 +11,8 @@ import { FeaturedCard } from "@/components/FeaturedCard";
 import { FilterBar } from "@/components/FilterBar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CONTACT_PHONE_DISPLAY, TEL_URL, WHATSAPP_URL } from "@/lib/constants";
+import markAsset from "@/assets/safirooms-mark.png.asset.json";
+
 
 const searchSchema = z.object({
   type: z.string().optional(),
@@ -80,17 +82,28 @@ function Home() {
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <div className="grid size-8 place-items-center rounded-lg bg-brand-blue text-sm font-bold text-white">
-                S
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-base font-bold text-foreground">SafiRooms</div>
-                <div className="flex items-center gap-1 text-[10px] font-medium text-brand-green">
+              <img
+                src={markAsset.url}
+                alt="SafiRooms logo"
+                className="size-9 shrink-0 object-contain"
+              />
+              <div className="relative min-w-0">
+                <img
+                  src={markAsset.url}
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -left-2 -top-2 h-12 w-auto opacity-15 dark:opacity-25"
+                />
+                <div className="relative truncate text-base font-bold text-foreground">
+                  SafiRooms
+                </div>
+                <div className="relative flex items-center gap-1 text-[10px] font-medium text-brand-green">
                   <ShieldCheck className="size-3" /> Safi Verified rentals
                 </div>
               </div>
             </div>
           </div>
+
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link
