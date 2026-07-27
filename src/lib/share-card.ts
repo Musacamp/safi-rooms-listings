@@ -151,17 +151,20 @@ export async function buildListingShareImage(l: ShareListing): Promise<Blob | nu
 
   ctx.fillStyle = "#5a6472";
   ctx.font = "400 34px Inter, system-ui, sans-serif";
-  ctx.fillText(`📍 ${l.location}`, left, y + 30);
+  ctx.fillText(l.location, left, y + 30);
   y += 70;
+
 
   ctx.fillStyle = "#0f2a52";
   ctx.font = "800 60px Inter, system-ui, sans-serif";
   const price = formatUGX(l.rent_ugx);
   ctx.fillText(price, left, y + 46);
+  const priceW = ctx.measureText(price).width;
   ctx.fillStyle = "#5a6472";
   ctx.font = "400 32px Inter, system-ui, sans-serif";
-  ctx.fillText(" / month", left + ctx.measureText(price).width + 100, y + 46);
+  ctx.fillText("/ month", left + priceW + 16, y + 46);
   y += 82;
+
 
   ctx.fillStyle = "#5a6472";
   ctx.font = "400 30px Inter, system-ui, sans-serif";
