@@ -8,8 +8,19 @@ import {
   setListingFlags,
 } from "@/lib/admin-listings.functions";
 import { formatUGX } from "@/lib/format";
-import { ROOM_TYPE_LABEL } from "@/lib/constants";
-import { Pencil, Trash2, Star, Archive, ArchiveRestore, Eye, EyeOff } from "lucide-react";
+import { ROOM_TYPE_LABEL, ROOM_TYPES, type RoomTypeValue } from "@/lib/constants";
+import {
+  Pencil,
+  Trash2,
+  Star,
+  Archive,
+  ArchiveRestore,
+  Eye,
+  EyeOff,
+  Search,
+  X,
+} from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/admin/listings")({
   component: AdminListings,
@@ -25,6 +36,9 @@ function AdminListings() {
   });
 
   const [filter, setFilter] = useState<"all" | "active" | "archived">("all");
+  const [q, setQ] = useState("");
+  const [type, setType] = useState<"all" | RoomTypeValue>("all");
+
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin-listings"] });
