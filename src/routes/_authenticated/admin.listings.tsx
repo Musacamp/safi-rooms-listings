@@ -57,10 +57,26 @@ function AdminListings() {
     }
   };
 
+  const term = q.trim().toLowerCase();
   const rows = (listings.data ?? []).filter((l) => {
-    if (filter === "active") return !l.is_archived;
-    if (filter === "archived") return l.is_archived;
-    return true;
+    if (filter === "active" && l.is_archived) return false;
+    if (filter === "archived" && !l.is_archived) return false;
+    if (type !== "all" && l.room_type !== type) return false;
+    if (!term) return true;
+    const haystack = [
+      l.title,
+      l.location,
+      l.description ?? "",
+      ROOM_TYPE_LABEL[l.room_type],
+      l.room_type.replace("_", " "),
+      String(l.rent_ugx),
+      formatUGX(l.rent_ugx),
+      String(l.deposit_ugx),
+      (l.amenities ?? []).join(" "),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return term.split(/\s+/).every((t) => haystack.includes(t));
   });
 
   return (
@@ -74,6 +90,42 @@ function AdminListings() {
           + New listing
         </Link>
       </div>
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search title, location, type (single, double, self-contained…), price"
+          className="w-full rounded-xl bg-card py-2.5 pl-9 pr-9 text-sm text-foreground ring-1 ring-border outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-blue"
+        />
+        {q && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => setQ("")}
+            className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-full bg-secondary text-secondary-foreground"
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
+      </div>
+
+      <div className="flex gap-1 overflow-x-auto no-scrollbar">
+        {(["all", ...ROOM_TYPES.map((r) => r.value)] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setType(t as typeof type)}
+            className={
+              "shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium ring-1 ring-border " +
+              (type === t ? "bg-brand-green text-white" : "bg-card text-muted-foreground")
+            }
+          >
+            {t === "all" ? "All types" : ROOM_TYPE_LABEL[t as RoomTypeValue]}
+          </button>
+        ))}
+      </div>
+
       <div className="flex gap-1">
         {(["all", "active", "archived"] as const).map((f) => (
           <button
@@ -88,6 +140,11 @@ function AdminListings() {
           </button>
         ))}
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        {rows.length} {rows.length === 1 ? "result" : "results"}
+      </p>
+
       <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-border">
         {rows.length === 0 ? (
           <p className="p-6 text-center text-sm text-muted-foreground">No listings.</p>
