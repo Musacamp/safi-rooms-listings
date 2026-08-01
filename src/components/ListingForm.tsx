@@ -269,7 +269,45 @@ export function ListingForm({
               </option>
             ))}
           </select>
+          {(values.room_type === "single" || values.room_type === "double") && (
+            <div className="mt-2 flex gap-1.5">
+              {[false, true].map((sc) => (
+                <button
+                  type="button"
+                  key={String(sc)}
+                  onClick={() => setField("is_self_contained", sc)}
+                  className={
+                    "rounded-full px-3 py-1.5 text-[11px] font-medium ring-1 ring-border " +
+                    (values.is_self_contained === sc
+                      ? "bg-brand-green text-white"
+                      : "bg-secondary text-secondary-foreground")
+                  }
+                >
+                  {sc ? "Self-Contained" : "Ordinary"}
+                </button>
+              ))}
+            </div>
+          )}
         </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Room number (optional)">
+            <input
+              placeholder="e.g. B4"
+              value={values.room_number ?? ""}
+              onChange={(e) => setField("room_number", e.target.value || null)}
+              className="input"
+            />
+          </Field>
+          <Field label="Distance from town (optional)">
+            <input
+              placeholder="e.g. 1.2 km"
+              value={values.distance_from_town ?? ""}
+              onChange={(e) => setField("distance_from_town", e.target.value || null)}
+              className="input"
+            />
+          </Field>
+        </div>
+
         <Field label="Description">
           <textarea
             rows={5}
