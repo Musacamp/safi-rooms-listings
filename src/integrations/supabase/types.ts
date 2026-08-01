@@ -65,14 +65,18 @@ export type Database = {
           created_at: string
           deposit_ugx: number
           description: string
+          distance_from_town: string | null
           id: string
           is_archived: boolean
           is_available: boolean
           is_featured: boolean
+          is_self_contained: boolean
+          is_verified: boolean
           location: string
           photos: string[]
           posted_at: string
           rent_ugx: number
+          room_number: string | null
           room_type: Database["public"]["Enums"]["room_type"]
           title: string
           updated_at: string
@@ -86,14 +90,18 @@ export type Database = {
           created_at?: string
           deposit_ugx?: number
           description?: string
+          distance_from_town?: string | null
           id?: string
           is_archived?: boolean
           is_available?: boolean
           is_featured?: boolean
+          is_self_contained?: boolean
+          is_verified?: boolean
           location: string
           photos?: string[]
           posted_at?: string
           rent_ugx: number
+          room_number?: string | null
           room_type: Database["public"]["Enums"]["room_type"]
           title: string
           updated_at?: string
@@ -107,14 +115,18 @@ export type Database = {
           created_at?: string
           deposit_ugx?: number
           description?: string
+          distance_from_town?: string | null
           id?: string
           is_archived?: boolean
           is_available?: boolean
           is_featured?: boolean
+          is_self_contained?: boolean
+          is_verified?: boolean
           location?: string
           photos?: string[]
           posted_at?: string
           rent_ugx?: number
+          room_number?: string | null
           room_type?: Database["public"]["Enums"]["room_type"]
           title?: string
           updated_at?: string

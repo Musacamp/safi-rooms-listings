@@ -1,31 +1,51 @@
-## What I found first (verified)
+## Written Listings Generator (Admin Portal)
 
-Your click counters really are broken, and not in the UI. The database has **520 view events, 7 call events, 10 WhatsApp events** logged — but every listing still shows `views 0 · calls 0 · wa 0`. Reason: the counter-bumping trigger runs with the *visitor's* permissions, and visitors aren't allowed to update listings, so the increment is silently dropped every time. The events are all safely stored, so nothing is lost — the totals can be rebuilt exactly.
+A new admin page that turns your live available rooms into a clean, branded poster you can share to WhatsApp with one tap.
 
-## 1. Admin portal
+### 1. Data additions (one migration)
 
-**Real click totals (root fix)**
-- Make the counter trigger run with elevated rights so every view/call/WhatsApp event increments the listing counters again.
-- Rebuild the existing counters from the 537 stored events so today's numbers are correct immediately, not starting from zero.
-- Admin listings + dashboard refresh their numbers automatically (auto-refetch every ~30s and on window focus), so counts stay effectively live while you're watching.
+Add to listings:
+- `is_self_contained` (yes/no) — existing rooms of type "Self-Contained" become Single + self-contained, so the six categories work.
+- `room_number` (optional text)
+- `distance_from_town` (optional text, e.g. "1.2 km from town")
+- `is_verified` (yes/no, default yes) — drives the Safi Verified badge.
 
-**Deposit — no typing**
-- The deposit field becomes read-only in New/Edit. Tapping it opens a popup sheet with **3 months / 4 months / 5 months / 6 months** (each showing the computed UGX from the rent), plus a "custom amount" option for edge cases. Tapping an option fills the deposit and closes the popup.
+The New/Edit listing form gets fields for all four: a Self-contained toggle, Room number, Distance from town, and a Verified switch. Room type list stays Single / Double / Apartment / Business (self-contained becomes a flag).
 
-**Top performing listings**
-- Rank by **total engagement = views + calls + WhatsApp** (descending), instead of views only. Each row shows the three numbers plus the total.
+### 2. Category tabs
 
-## 2. Client portal
+Six tabs, each generating its own listing:
+Ordinary Single · Self-Contained Single · Ordinary Double · Self-Contained Double · Apartments · Business Rooms
 
-**Remove analytics from public view**
-- Delete the 👁 / 📞 / 💬 counter row from the public listing cards and from the listing detail page. Tracking keeps recording silently in the background; only admins see numbers.
+Only rooms that are Available and not archived are ever included — nothing is invented. Duplicates (same location + rent + type) are collapsed.
 
-**"N left" vacancy badge**
-- New field on listings: **vacancies** (how many rooms are still free in the compound), editable by the admin in New/Edit with a number input and quick chips (1–5).
-- Shows as a small badge on the **top-left corner of the photo** on listing cards, featured cards, and the detail page carousel — rendered as "1 left", "3 left". Hidden when the room is occupied or vacancies is 0.
+### 3. Generate / Regenerate
 
-## Technical notes
+"Generate Listings" and "Regenerate" re-read the database, drop occupied/hidden rooms, pick up new ones, refresh prices, and re-sort. Sorting defaults to lowest rent first, with optional toggles for Newest first and Location A–Z.
 
-- Migration: `ALTER FUNCTION`/recreate `tg_bump_listing_counter()` as `SECURITY DEFINER` with `search_path = public`; one-time backfill `UPDATE listings SET views_count = (…count from listing_events…)` per kind; `ALTER TABLE listings ADD COLUMN vacancies integer NOT NULL DEFAULT 1` with a `>= 0` check.
-- `src/lib/admin-listings.functions.ts` + `ListingFormValues`/zod input gain `vacancies`.
-- Files touched: `ListingForm.tsx` (deposit popup, vacancies field), `ListingCard.tsx`, `FeaturedCard.tsx`, `listing.$id.tsx` (remove counters, add badge), `admin.index.tsx` (ranking + refetch), `admin.listings.tsx` (refetch interval).
+### 4. Filters and search
+
+Filters: location, rent range, deposit, amenities, date added, verified only.
+Search box matches location, room type, price, amenities, and contact.
+
+### 5. Poster output
+
+Each generated listing renders as a poster:
+- Header: category name + current date (e.g. `SINGLE ROOMS ORDINARY — 📅 28 July 2026`)
+- Rows: room number (if set), location, monthly rent, deposit, amenities with ✅ marks, distance from town, availability, Safi Verified badge
+- Missing values are simply omitted, never shown blank
+- Transparent SafiRooms logo watermark behind the content, low opacity so text stays readable
+- Footer: SafiRooms logo, "🏡 SafiRooms — Let there be space for everyone.", brokerage-fee reminder, thank-you line, contact number
+
+Brand navy/green colours, clean dividers, mobile-first card layout consistent with the rest of the admin portal.
+
+### 6. Share to WhatsApp
+
+One tap: admin controls are excluded from the render, the poster is drawn to a high-resolution image, and the device share sheet opens with the PNG attached and no extra text — image only. On desktop it downloads the PNG and opens WhatsApp Web. Export in v1 is image (PNG) only; PDF/print can come later.
+
+### Technical notes
+
+- New route `src/routes/_authenticated/admin.generator.tsx` plus a nav link in the admin layout.
+- Reuses the existing canvas approach from `src/lib/share-card.ts`; a new `src/lib/poster-card.ts` draws multi-row category posters at high DPI (fast, no server round-trip, well under 3s).
+- New admin server function `adminListAvailableListings` filters available/non-archived rows server-side; results cached by react-query so tab switching is instant and thousands of rows stay fast (poster paginates into multiple images if a category exceeds one page).
+- Sharing uses `navigator.share` with a `File`, mirroring `ShareListingButton`'s fallback logic.

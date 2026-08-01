@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, ListPlus, LogOut, Home } from "lucide-react";
+import { LayoutDashboard, ListPlus, LogOut, Home, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -52,6 +52,12 @@ function AdminLayout() {
             label="Listings"
           />
           <NavLink to="/admin/new" icon={<ListPlus className="size-3.5" />} label="New" />
+          <NavLink
+            to="/admin/generator"
+            icon={<Sparkles className="size-3.5" />}
+            label="Generator"
+          />
+
         </nav>
       </header>
       <div className="mx-auto max-w-5xl px-4 pt-4">
