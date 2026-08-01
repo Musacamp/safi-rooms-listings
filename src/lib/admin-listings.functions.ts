@@ -32,9 +32,28 @@ const listingInput = z.object({
   is_available: z.boolean().default(true),
 
   is_featured: z.boolean().default(false),
+  is_self_contained: z.boolean().default(false),
+  is_verified: z.boolean().default(true),
+  room_number: z.string().max(60).nullable().default(null),
+  distance_from_town: z.string().max(120).nullable().default(null),
   amenities: z.array(z.string()).default([]),
   photos: z.array(z.string()).default([]),
 });
+
+export const adminListAvailableListings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data, error } = await context.supabase
+      .from("listings")
+      .select("*")
+      .eq("is_archived", false)
+      .eq("is_available", true)
+      .order("rent_ugx", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
 
 export const adminListListings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
