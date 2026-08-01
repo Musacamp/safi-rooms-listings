@@ -17,6 +17,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminNewRouteImport } from './routes/_authenticated/admin.new'
 import { Route as AuthenticatedAdminListingsRouteImport } from './routes/_authenticated/admin.listings'
+import { Route as AuthenticatedAdminGeneratorRouteImport } from './routes/_authenticated/admin.generator'
 import { Route as AuthenticatedAdminEditIdRouteImport } from './routes/_authenticated/admin.edit.$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -59,6 +60,12 @@ const AuthenticatedAdminListingsRoute =
     path: '/listings',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminGeneratorRoute =
+  AuthenticatedAdminGeneratorRouteImport.update({
+    id: '/generator',
+    path: '/generator',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminEditIdRoute =
   AuthenticatedAdminEditIdRouteImport.update({
     id: '/edit/$id',
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/listing/$id': typeof ListingIdRoute
+  '/admin/generator': typeof AuthenticatedAdminGeneratorRoute
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/admin/new': typeof AuthenticatedAdminNewRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -80,6 +88,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/listing/$id': typeof ListingIdRoute
+  '/admin/generator': typeof AuthenticatedAdminGeneratorRoute
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/admin/new': typeof AuthenticatedAdminNewRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -92,6 +101,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/listing/$id': typeof ListingIdRoute
+  '/_authenticated/admin/generator': typeof AuthenticatedAdminGeneratorRoute
   '/_authenticated/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/_authenticated/admin/new': typeof AuthenticatedAdminNewRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/listing/$id'
+    | '/admin/generator'
     | '/admin/listings'
     | '/admin/new'
     | '/admin/'
@@ -113,6 +124,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/listing/$id'
+    | '/admin/generator'
     | '/admin/listings'
     | '/admin/new'
     | '/admin'
@@ -124,6 +136,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/listing/$id'
+    | '/_authenticated/admin/generator'
     | '/_authenticated/admin/listings'
     | '/_authenticated/admin/new'
     | '/_authenticated/admin/'
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminListingsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/generator': {
+      id: '/_authenticated/admin/generator'
+      path: '/generator'
+      fullPath: '/admin/generator'
+      preLoaderRoute: typeof AuthenticatedAdminGeneratorRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/edit/$id': {
       id: '/_authenticated/admin/edit/$id'
       path: '/edit/$id'
@@ -206,6 +226,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminGeneratorRoute: typeof AuthenticatedAdminGeneratorRoute
   AuthenticatedAdminListingsRoute: typeof AuthenticatedAdminListingsRoute
   AuthenticatedAdminNewRoute: typeof AuthenticatedAdminNewRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -213,6 +234,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminGeneratorRoute: AuthenticatedAdminGeneratorRoute,
   AuthenticatedAdminListingsRoute: AuthenticatedAdminListingsRoute,
   AuthenticatedAdminNewRoute: AuthenticatedAdminNewRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
