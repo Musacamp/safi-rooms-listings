@@ -49,8 +49,13 @@ export function ListingForm({
     is_available: initial?.is_available ?? true,
 
     is_featured: initial?.is_featured ?? false,
+    is_self_contained: initial?.is_self_contained ?? false,
+    is_verified: initial?.is_verified ?? true,
+    room_number: initial?.room_number ?? null,
+    distance_from_town: initial?.distance_from_town ?? null,
     amenities: initial?.amenities ?? [],
     photos: initial?.photos ?? [],
+
   });
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
