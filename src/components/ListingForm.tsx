@@ -418,6 +418,16 @@ export function ListingForm({
             className="size-4 accent-brand-blue"
           />
         </label>
+        <label className="flex items-center justify-between py-1">
+          <span className="text-sm text-foreground">Safi Verified</span>
+          <input
+            type="checkbox"
+            checked={values.is_verified}
+            onChange={(e) => setField("is_verified", e.target.checked)}
+            className="size-4 accent-brand-blue"
+          />
+        </label>
+
       </div>
 
       <button
