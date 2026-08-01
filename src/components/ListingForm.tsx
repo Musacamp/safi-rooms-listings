@@ -19,8 +19,13 @@ export type ListingFormValues = {
   vacancies: number;
   is_available: boolean;
   is_featured: boolean;
+  is_self_contained: boolean;
+  is_verified: boolean;
+  room_number: string | null;
+  distance_from_town: string | null;
   amenities: string[];
   photos: string[];
+
 };
 
 
