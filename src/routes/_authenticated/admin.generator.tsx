@@ -37,7 +37,7 @@ function Generator() {
     refetchInterval: 60_000,
   });
 
-  const [cat, setCat] = useState<ListingCategoryKey>("single_ordinary");
+  const [cat, setCat] = useState<ListingCategoryKey>("single");
   const [sort, setSort] = useState<Sort>("rent");
   const [q, setQ] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -51,20 +51,31 @@ function Generator() {
   const [generated, setGenerated] = useState(true);
   const [sharing, setSharing] = useState(false);
 
-  const category = LISTING_CATEGORIES.find((c) => c.key === cat)!;
+  const parsed = useMemo(() => parseSearchQuery(q), [q]);
+  const smart = q.trim().length > 0;
+  const effectiveCat: ListingCategoryKey = parsed.type ?? cat;
+  const category = LISTING_CATEGORIES.find((c) => c.key === effectiveCat)!;
+  const posterTitle = smart ? describeQuery(parsed) : category.title;
 
   const list = useMemo(() => {
     const all = rooms.data ?? [];
-    const term = q.trim().toLowerCase();
-    const min = Number(minRent) || 0;
-    const max = Number(maxRent) || Infinity;
+    const term = parsed.rest.trim().toLowerCase();
+    const min = parsed.min ?? Number(minRent) || 0;
+    const max = parsed.max ?? Number(maxRent) || Infinity;
     const dep = Number(maxDeposit) || Infinity;
     const since = addedDays ? Date.now() - addedDays * 86400000 : 0;
+    const locs = parsed.locations.length
+      ? parsed.locations
+      : location
+        ? [location]
+        : [];
+    const catFilter = smart && !parsed.type ? null : category;
 
     let out = all.filter((l) => {
       if (l.is_archived || !l.is_available) return false;
-      if (!category.match(l)) return false;
-      if (location && !l.location.toLowerCase().includes(location.toLowerCase())) return false;
+      if (catFilter && !catFilter.match(l)) return false;
+      if (locs.length && !locs.some((loc) => l.location.toLowerCase().includes(loc.toLowerCase())))
+        return false;
       if (l.rent_ugx < min || l.rent_ugx > max) return false;
       if (l.deposit_ugx > dep) return false;
       if (verifiedOnly && !l.is_verified) return false;
@@ -105,7 +116,9 @@ function Generator() {
   }, [
     rooms.data,
     category,
-    q,
+    catKeyDep(smart, parsed.type),
+    parsed,
+    smart,
     location,
     minRent,
     maxRent,
