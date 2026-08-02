@@ -22,6 +22,7 @@ import {
   LISTING_CATEGORIES,
   type ListingCategoryKey,
 } from "@/lib/constants";
+import { describeQuery, parseSearchQuery } from "@/lib/search-parse";
 import markAsset from "@/assets/safirooms-mark.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/admin/generator")({
