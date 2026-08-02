@@ -68,39 +68,96 @@ async function resolveListings(
   return Promise.all(rows.map((r) => resolveListing(supabase, r)));
 }
 
+const PROPERTY_TYPE_MAP: Record<string, { room_type: string; self: boolean | null }> = {
+  single: { room_type: "single", self: false },
+  single_self: { room_type: "single", self: true },
+  double: { room_type: "double", self: false },
+  double_self: { room_type: "double", self: true },
+  apartment: { room_type: "apartment", self: null },
+  business: { room_type: "business", self: null },
+  shop: { room_type: "shop", self: null },
+};
+
 const filtersSchema = z
   .object({
     type: z.string().optional(),
     location: z.string().optional(),
+    locations: z.array(z.string()).optional(),
+    amenities: z.array(z.string()).optional(),
     min: z.number().optional(),
     max: z.number().optional(),
     q: z.string().optional(),
     recent: z.boolean().optional(),
+    available: z.boolean().optional(),
+    verified: z.boolean().optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+    offset: z.number().int().min(0).optional(),
   })
   .default({});
+
+const sel = (s: string): string => s;
 
 export const listListings = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => filtersSchema.parse(d ?? {}))
   .handler(async ({ data }) => {
     const sb = makePublicClient();
+    const limit = data.limit ?? 20;
+    const offset = data.offset ?? 0;
     let q = sb
       .from("listings")
-      .select("*")
+      .select(sel("*"))
       .eq("is_archived", false)
-      .order("posted_at", { ascending: false });
-    if (data.type) q = q.eq("room_type", data.type as Database["public"]["Enums"]["room_type"]);
-    if (data.location) q = q.ilike("location", `%${data.location}%`);
+      .order("posted_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    const pt = data.type ? PROPERTY_TYPE_MAP[data.type] : undefined;
+    if (pt) {
+      q = q.eq("room_type", pt.room_type as Database["public"]["Enums"]["room_type"]);
+      if (pt.self !== null) q = q.eq("is_self_contained", pt.self);
+    }
+
+    const locs = (data.locations ?? []).concat(data.location ? [data.location] : []).filter(Boolean);
+    if (locs.length === 1) q = q.ilike("location", `%${locs[0]}%`);
+    else if (locs.length > 1) {
+      q = q.or(locs.map((l) => `location.ilike.%${l.replace(/[,()]/g, "")}%`).join(","));
+    }
+
     if (typeof data.min === "number") q = q.gte("rent_ugx", data.min);
     if (typeof data.max === "number") q = q.lte("rent_ugx", data.max);
-    if (data.q) q = q.or(`title.ilike.%${data.q}%,description.ilike.%${data.q}%,location.ilike.%${data.q}%`);
+    if (data.amenities?.length) q = q.contains("amenities", data.amenities);
+    if (typeof data.available === "boolean") q = q.eq("is_available", data.available);
+    if (data.verified) q = q.eq("is_verified", true);
+    if (data.q)
+      q = q.or(
+        `title.ilike.%${data.q}%,description.ilike.%${data.q}%,location.ilike.%${data.q}%`,
+      );
     if (data.recent) {
       const since = new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString();
       q = q.gte("posted_at", since);
     }
-    const { data: rows, error } = await q;
+    const { data: rows, error } = await q.returns<Listing[]>();
     if (error) throw new Error(error.message);
     return resolveListings(sb, rows ?? []);
   });
+
+export const getLocationSuggestions = createServerFn({ method: "GET" }).handler(async () => {
+  const sb = makePublicClient();
+  const { data, error } = await sb
+    .from("listings")
+    .select(sel("location"))
+    .eq("is_archived", false)
+    .returns<{ location: string }[]>();
+  if (error) throw new Error(error.message);
+  const counts = new Map<string, number>();
+  for (const r of data ?? []) {
+    const name = (r.location ?? "").trim();
+    if (!name) continue;
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([location, count]) => ({ location, count }))
+    .sort((a, b) => b.count - a.count || a.location.localeCompare(b.location));
+});
 
 export const getFeaturedListings = createServerFn({ method: "GET" }).handler(async () => {
   const sb = makePublicClient();
