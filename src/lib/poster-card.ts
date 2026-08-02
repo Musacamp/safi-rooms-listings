@@ -1,6 +1,7 @@
 import logoAsset from "@/assets/safirooms-logo.png.asset.json";
 import markAsset from "@/assets/safirooms-mark.png.asset.json";
-import { AMENITY_LABEL, CONTACT_PHONE_DISPLAY } from "@/lib/constants";
+import { AMENITY_LABEL, CONTACT_PHONE_DISPLAY, SITE_URL, SITE_URL_SHORT } from "@/lib/constants";
+import { drawQr } from "@/lib/qr";
 
 export type PosterRoom = {
   room_number: string | null;
@@ -66,12 +67,15 @@ export async function buildPosterImage(opts: {
   title: string;
   rooms: PosterRoom[];
   date?: Date;
+  /** Deep link opening the client portal with these exact filters applied. */
+  link?: string;
 }): Promise<Blob | null> {
   const { title, rooms } = opts;
+  const link = opts.link ?? SITE_URL;
   const dateLabel = formatPosterDate(opts.date ?? new Date());
 
   const headerH = 250;
-  const footerH = 300;
+  const footerH = 330;
   const bodyH = Math.max(CARD_H, rooms.length * (CARD_H + 16));
   const H = headerH + bodyH + footerH;
 
@@ -105,8 +109,13 @@ export async function buildPosterImage(opts: {
 
   // header text
   ctx.fillStyle = "#ffffff";
-  ctx.font = "800 58px Inter, system-ui, sans-serif";
-  ctx.fillText(title, PAD, 118);
+  ctx.font = "800 52px Inter, system-ui, sans-serif";
+  const maxTitleW = W - PAD * 2;
+  let heading = title;
+  while (ctx.measureText(heading).width > maxTitleW && heading.length > 8) {
+    heading = heading.slice(0, -2);
+  }
+  ctx.fillText(heading, PAD, 118);
   ctx.font = "600 34px Inter, system-ui, sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.85)";
   ctx.fillText(`📅 ${dateLabel}`, PAD, 176);
@@ -184,25 +193,39 @@ export async function buildPosterImage(opts: {
   ctx.fillStyle = NAVY;
   ctx.fillRect(0, fy, W, footerH);
   if (logo) {
-    const lh = 80;
+    const lh = 76;
     const lw = (logo.width / logo.height) * lh;
-    ctx.drawImage(logo, PAD, fy + 40, lw, lh);
+    ctx.drawImage(logo, PAD, fy + 36, lw, lh);
   }
+
+  // QR to the filtered portal view
+  const qrSize = 190;
+  const qrX = W - PAD - qrSize;
+  const qrY = fy + 40;
+  ctx.fillStyle = "#ffffff";
+  roundRect(ctx, qrX - 14, qrY - 14, qrSize + 28, qrSize + 28, 22);
+  ctx.fill();
+  drawQr(ctx, link, qrX, qrY, qrSize);
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.font = "600 20px Inter, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Scan to open these rooms", qrX + qrSize / 2, qrY + qrSize + 46);
+  ctx.textAlign = "left";
+
   ctx.fillStyle = "#ffffff";
   ctx.font = "800 38px Inter, system-ui, sans-serif";
-  ctx.fillText("🏡 SafiRooms", PAD, fy + 168);
-  ctx.font = "500 30px Inter, system-ui, sans-serif";
+  ctx.fillText("🏡 SafiRooms", PAD, fy + 158);
+  ctx.font = "500 28px Inter, system-ui, sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.88)";
-  ctx.fillText('"Let there be space for everyone."', PAD, fy + 210);
+  ctx.fillText('"Let there be space for everyone."', PAD, fy + 198);
   ctx.font = "600 26px Inter, system-ui, sans-serif";
-  ctx.fillText(`Call / WhatsApp ${CONTACT_PHONE_DISPLAY}`, PAD, fy + 252);
-  ctx.font = "400 22px Inter, system-ui, sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.70)";
-  ctx.fillText(
-    "Brokerage fees apply when securing a room through SafiRooms. Thank you for trusting SafiRooms.",
-    PAD,
-    fy + 286,
-  );
+  ctx.fillText(`Call / WhatsApp ${CONTACT_PHONE_DISPLAY}`, PAD, fy + 238);
+  ctx.font = "600 24px Inter, system-ui, sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.78)";
+  ctx.fillText(SITE_URL_SHORT, PAD, fy + 274);
+  ctx.font = "400 21px Inter, system-ui, sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.65)";
+  ctx.fillText("Brokerage fees apply when securing a room through SafiRooms.", PAD, fy + 306);
 
   return await new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
 }
