@@ -1,109 +1,122 @@
 import { Link } from "@tanstack/react-router";
-import { Phone, MessageCircle, MapPin, ShieldCheck } from "lucide-react";
+import { Phone, MessageCircle, MapPin, BadgeCheck, Bell } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
-import { formatUGX, relativeDate } from "@/lib/format";
-import { ROOM_TYPE_LABEL, AMENITY_LABEL, TEL_URL, WHATSAPP_URL } from "@/lib/constants";
+import { formatUGX } from "@/lib/format";
+import { AMENITY_LABEL, TEL_URL, WHATSAPP_URL, propertyTypeLabel } from "@/lib/constants";
 import { track } from "@/lib/track";
-import { NotifyMeButton } from "./NotifyMeButton";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
+const NEW_MS = 5 * 24 * 3600 * 1000;
+
 export function ListingCard({ listing }: { listing: Listing }) {
   const cover = listing.photos?.[0];
-  const amenityKeys = (listing.amenities ?? []).slice(0, 4);
-  const statusChip = listing.is_available ? (
-    <span className="rounded bg-brand-blue/10 px-1.5 py-0.5 text-[10px] font-medium text-brand-blue">
-      Available
-    </span>
-  ) : (
-    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
-      Occupied
-    </span>
-  );
+  const amenities = listing.amenities ?? [];
+  const shown = amenities.slice(0, 3);
+  const extra = amenities.length - shown.length;
+  const isNew = Date.now() - new Date(listing.posted_at).getTime() < NEW_MS;
+
   return (
-    <div className="flex flex-col gap-3 rounded-2xl bg-card p-3 ring-1 ring-border">
+    <div className="relative flex gap-2.5 rounded-xl bg-card p-2 ring-1 ring-border">
       <Link
         to="/listing/$id"
         params={{ id: listing.id }}
-        className="flex min-w-0 gap-3"
-        onClick={() => {
-          track({ listing_id: listing.id, kind: "view" });
-        }}
+        className="min-w-0 flex flex-1 gap-2.5"
+        onClick={() => track({ listing_id: listing.id, kind: "view" })}
       >
-        <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-muted ring-1 ring-border">
+        <div className="relative size-[74px] shrink-0 overflow-hidden rounded-lg bg-muted">
           {cover ? (
-            <img src={cover} alt={listing.title} loading="lazy" className="size-full object-cover" />
+            <img
+              src={cover}
+              alt={listing.title}
+              width={74}
+              height={74}
+              loading="lazy"
+              decoding="async"
+              className="size-full object-cover"
+            />
           ) : (
-            <div className="grid size-full place-items-center text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+            <div className="grid size-full place-items-center text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
               No photo
             </div>
           )}
           {listing.is_available && listing.vacancies > 0 && (
-            <span className="absolute left-1 top-1 rounded-md bg-brand-green px-1.5 py-0.5 text-[10px] font-semibold text-white shadow">
+            <span className="absolute left-0.5 top-0.5 rounded bg-brand-green px-1 py-px text-[9px] font-semibold leading-tight text-white">
               {listing.vacancies} left
             </span>
           )}
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="mb-0.5 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="size-3 text-brand-green" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-green">
-                Safi Verified
-              </span>
+        <div className="min-w-0 flex-1 leading-tight">
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="truncate text-[15px] font-extrabold text-foreground">
+              {formatUGX(listing.rent_ugx)}
+              <span className="ml-0.5 text-[10px] font-medium text-muted-foreground">/month</span>
             </div>
-            {statusChip}
+            {listing.is_verified && (
+              <span className="inline-flex shrink-0 items-center gap-0.5 text-[9px] font-semibold uppercase text-brand-green">
+                <BadgeCheck className="size-3" /> Verified
+              </span>
+            )}
           </div>
-          <h3 className="truncate text-sm font-medium text-foreground">{listing.title}</h3>
-          <p className="mb-1 flex items-center gap-1 truncate text-xs text-muted-foreground">
+
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
             <MapPin className="size-3 shrink-0" />
-            {listing.location}
+            <span className="truncate">{listing.location}</span>
+            <span className="shrink-0">· {propertyTypeLabel(listing)}</span>
           </p>
-          <div className="text-sm font-semibold text-foreground">{formatUGX(listing.rent_ugx)}</div>
-          <div className="text-[10px] text-muted-foreground">
-            Deposit: {formatUGX(listing.deposit_ugx)} · {ROOM_TYPE_LABEL[listing.room_type]} ·{" "}
-            {relativeDate(listing.posted_at)}
-          </div>
+
+          <p className="truncate text-[11px] text-muted-foreground">
+            Deposit {formatUGX(listing.deposit_ugx)} ·{" "}
+            <span
+              className={listing.is_available ? "font-semibold text-brand-green" : "text-amber-600"}
+            >
+              {listing.is_available ? "Available" : "Occupied"}
+            </span>
+            {isNew && <span className="ml-1 font-semibold text-brand-blue">· New</span>}
+          </p>
+
+          {shown.length > 0 && (
+            <p className="truncate text-[11px] text-foreground/80">
+              {shown.map((a) => `✅ ${AMENITY_LABEL[a] ?? a}`).join(" • ")}
+              {extra > 0 && <span className="text-muted-foreground"> +{extra}</span>}
+            </p>
+          )}
         </div>
       </Link>
 
-      <div className="flex items-center justify-between border-t border-border pt-3">
-        <div className="flex flex-wrap gap-1">
-          {amenityKeys.map((a) => (
-            <span
-              key={a}
-              className="rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground"
+      <div className="flex shrink-0 flex-col justify-center gap-1">
+        {listing.is_available ? (
+          <>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => track({ listing_id: listing.id, kind: "whatsapp" })}
+              aria-label={`WhatsApp about ${listing.title}`}
+              className="grid size-8 place-items-center rounded-lg bg-brand-green text-white"
             >
-              {AMENITY_LABEL[a] ?? a}
-            </span>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          {listing.is_available ? (
-            <>
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => track({ listing_id: listing.id, kind: "whatsapp" })}
-                aria-label="WhatsApp"
-                className="grid size-9 place-items-center rounded-lg bg-brand-green text-white ring-1 ring-brand-green"
-              >
-                <MessageCircle className="size-4" />
-              </a>
-              <a
-                href={TEL_URL}
-                onClick={() => track({ listing_id: listing.id, kind: "call" })}
-                className="flex items-center gap-2 rounded-lg bg-action px-3 py-2 text-sm font-medium text-white ring-1 ring-action"
-              >
-                <Phone className="size-4" /> Call Now
-              </a>
-            </>
-          ) : (
-            <NotifyMeButton listingId={listing.id} compact />
-          )}
-        </div>
+              <MessageCircle className="size-4" />
+            </a>
+            <a
+              href={TEL_URL}
+              onClick={() => track({ listing_id: listing.id, kind: "call" })}
+              aria-label={`Call about ${listing.title}`}
+              className="grid size-8 place-items-center rounded-lg bg-action text-white"
+            >
+              <Phone className="size-4" />
+            </a>
+          </>
+        ) : (
+          <Link
+            to="/listing/$id"
+            params={{ id: listing.id }}
+            aria-label="Notify me when available"
+            className="grid size-8 place-items-center rounded-lg bg-secondary text-secondary-foreground ring-1 ring-border"
+          >
+            <Bell className="size-4" />
+          </Link>
+        )}
       </div>
     </div>
   );
