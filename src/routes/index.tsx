@@ -203,25 +203,31 @@ function Home() {
           </section>
         )}
 
-        <section className="px-4">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">
-              {search.recent ? "Newly Added · " : ""}
-              {rows.length} {rows.length === 1 ? "listing" : "listings"}
-              {search.recent ? " in the last 5 days" : ""}
+        <section className="px-3">
+          <div className="mb-1.5 flex items-center justify-between">
+            <h2 className="text-[13px] font-semibold text-foreground">
+              {search.recent ? "Newly added · " : ""}
+              {rows.length}
+              {infinite.hasNextPage ? "+" : ""} {rows.length === 1 ? "listing" : "listings"}
             </h2>
           </div>
-          {rows.length === 0 ? (
-            <div className="rounded-2xl bg-card p-8 text-center ring-1 ring-border">
-              <p className="text-sm text-muted-foreground">
+          {rows.length === 0 && !infinite.isFetching ? (
+            <div className="rounded-xl bg-card p-8 text-center ring-1 ring-border">
+              <p className="text-[13px] text-muted-foreground">
                 No listings match your filters. Try clearing them.
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
               {rows.map((l) => (
                 <ListingCard key={l.id} listing={l} />
               ))}
+            </div>
+          )}
+          <div ref={sentinel} className="h-8" />
+          {infinite.isFetchingNextPage && (
+            <div className="grid place-items-center py-2 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
             </div>
           )}
         </section>
