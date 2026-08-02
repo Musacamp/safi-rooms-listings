@@ -1,6 +1,7 @@
 import logoAsset from "@/assets/safirooms-logo.png.asset.json";
 import { formatUGX } from "@/lib/format";
-import { AMENITY_LABEL, ROOM_TYPE_LABEL, CONTACT_PHONE_DISPLAY } from "@/lib/constants";
+import { AMENITY_LABEL, ROOM_TYPE_LABEL, CONTACT_PHONE_DISPLAY, SITE_URL_SHORT } from "@/lib/constants";
+import { drawQr } from "@/lib/qr";
 
 export type ShareListing = {
   title: string;
@@ -77,7 +78,10 @@ function roundRect(
 const W = 1080;
 const H = 1500;
 
-export async function buildListingShareImage(l: ShareListing): Promise<Blob | null> {
+export async function buildListingShareImage(
+  l: ShareListing,
+  link?: string,
+): Promise<Blob | null> {
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
@@ -209,15 +213,27 @@ export async function buildListingShareImage(l: ShareListing): Promise<Blob | nu
 
   // Footer with logo
   const logo = await loadImage(logoAsset.url);
-  const footerY = H - 150;
+  const footerY = H - 190;
+  if (logo) {
+    const lh = 84;
+    const lw = (logo.width / logo.height) * lh;
+    ctx.drawImage(logo, left, footerY, lw, lh);
+  }
   ctx.fillStyle = "#5a6472";
   ctx.font = "600 30px Inter, system-ui, sans-serif";
-  ctx.fillText(`Call / WhatsApp ${CONTACT_PHONE_DISPLAY}`, left, footerY + 96);
-  if (logo) {
-    const lh = 96;
-    const lw = (logo.width / logo.height) * lh;
-    ctx.drawImage(logo, W - left - lw, footerY, lw, lh);
-  }
+  ctx.fillText(`Call / WhatsApp ${CONTACT_PHONE_DISPLAY}`, left, footerY + 132);
+  ctx.font = "500 26px Inter, system-ui, sans-serif";
+  ctx.fillStyle = "#7a8494";
+  ctx.fillText(SITE_URL_SHORT, left, footerY + 170);
+
+  const qrSize = 168;
+  const qrX = W - left - qrSize;
+  drawQr(ctx, link ?? `https://${SITE_URL_SHORT}`, qrX, footerY, qrSize);
+  ctx.fillStyle = "#5a6472";
+  ctx.font = "500 22px Inter, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Scan to view", qrX + qrSize / 2, footerY + qrSize + 34);
+  ctx.textAlign = "left";
 
   return await new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png", 0.95));
 }

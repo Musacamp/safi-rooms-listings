@@ -20,8 +20,10 @@ import {
   AMENITY_OPTIONS,
   CONTACT_PHONE_DISPLAY,
   LISTING_CATEGORIES,
+  SITE_URL,
   type ListingCategoryKey,
 } from "@/lib/constants";
+import { describeQuery, parseSearchQuery } from "@/lib/search-parse";
 import markAsset from "@/assets/safirooms-mark.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/admin/generator")({
@@ -37,7 +39,7 @@ function Generator() {
     refetchInterval: 60_000,
   });
 
-  const [cat, setCat] = useState<ListingCategoryKey>("single_ordinary");
+  const [cat, setCat] = useState<ListingCategoryKey>("single");
   const [sort, setSort] = useState<Sort>("rent");
   const [q, setQ] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -51,20 +53,31 @@ function Generator() {
   const [generated, setGenerated] = useState(true);
   const [sharing, setSharing] = useState(false);
 
-  const category = LISTING_CATEGORIES.find((c) => c.key === cat)!;
+  const parsed = useMemo(() => parseSearchQuery(q), [q]);
+  const smart = q.trim().length > 0;
+  const effectiveCat: ListingCategoryKey = parsed.type ?? cat;
+  const category = LISTING_CATEGORIES.find((c) => c.key === effectiveCat)!;
+  const posterTitle = smart ? describeQuery(parsed) : category.title;
 
   const list = useMemo(() => {
     const all = rooms.data ?? [];
-    const term = q.trim().toLowerCase();
-    const min = Number(minRent) || 0;
-    const max = Number(maxRent) || Infinity;
+    const term = parsed.rest.trim().toLowerCase();
+    const min = parsed.min ?? (Number(minRent) || 0);
+    const max = parsed.max ?? (Number(maxRent) || Infinity);
     const dep = Number(maxDeposit) || Infinity;
     const since = addedDays ? Date.now() - addedDays * 86400000 : 0;
+    const locs = parsed.locations.length
+      ? parsed.locations
+      : location
+        ? [location]
+        : [];
+    const catFilter = smart && !parsed.type ? null : category;
 
     let out = all.filter((l) => {
       if (l.is_archived || !l.is_available) return false;
-      if (!category.match(l)) return false;
-      if (location && !l.location.toLowerCase().includes(location.toLowerCase())) return false;
+      if (catFilter && !catFilter.match(l)) return false;
+      if (locs.length && !locs.some((loc) => l.location.toLowerCase().includes(loc.toLowerCase())))
+        return false;
       if (l.rent_ugx < min || l.rent_ugx > max) return false;
       if (l.deposit_ugx > dep) return false;
       if (verifiedOnly && !l.is_verified) return false;
@@ -105,7 +118,9 @@ function Generator() {
   }, [
     rooms.data,
     category,
-    q,
+    effectiveCat,
+    parsed,
+    smart,
     location,
     minRent,
     maxRent,
@@ -127,6 +142,22 @@ function Generator() {
     is_verified: l.is_verified,
   }));
 
+  const filterLink = useMemo(() => {
+    const p = new URLSearchParams();
+    if (!smart || parsed.type) p.set("type", effectiveCat);
+    const locs = parsed.locations.length ? parsed.locations : location ? [location] : [];
+    if (locs.length) p.set("loc", locs.join(","));
+    const min = parsed.min ?? (Number(minRent) || undefined);
+    const max = parsed.max ?? (Number(maxRent) || undefined);
+    if (min) p.set("min", String(min));
+    if (max) p.set("max", String(max));
+    if (amenities.length) p.set("am", amenities.join(","));
+    if (verifiedOnly) p.set("verified", "true");
+    p.set("avail", "available");
+    const qs = p.toString();
+    return qs ? `${SITE_URL}/?${qs}` : SITE_URL;
+  }, [smart, parsed, effectiveCat, location, minRent, maxRent, amenities, verifiedOnly]);
+
   const share = async () => {
     if (!posterRooms.length) {
       toast.error("No available rooms in this category");
@@ -134,9 +165,13 @@ function Generator() {
     }
     setSharing(true);
     try {
-      const blob = await buildPosterImage({ title: category.title, rooms: posterRooms });
+      const blob = await buildPosterImage({
+        title: posterTitle,
+        rooms: posterRooms,
+        link: filterLink,
+      });
       if (!blob) throw new Error("Could not render poster");
-      const file = new File([blob], `safirooms-${category.key}.png`, { type: "image/png" });
+      const file = new File([blob], `safirooms-${effectiveCat}.png`, { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file] });
         return;
@@ -147,8 +182,7 @@ function Generator() {
       a.download = file.name;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-      toast.success("Poster saved — attach it in WhatsApp");
-      window.open("https://web.whatsapp.com/", "_blank", "noreferrer");
+      toast.success("Poster saved — attach it in any app");
     } catch (e: any) {
       if (e?.name !== "AbortError") toast.error(e?.message ?? "Could not share the poster");
     } finally {
@@ -208,7 +242,7 @@ function Generator() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search location, price, amenities, contact"
+          placeholder='Try "Rooms in Pamba below 300k"'
           className="w-full rounded-xl bg-card py-2.5 pl-9 pr-9 text-sm text-foreground ring-1 ring-border outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-blue"
         />
         {q && (
@@ -326,7 +360,7 @@ function Generator() {
       {/* Poster preview */}
       <div className="overflow-hidden rounded-2xl ring-1 ring-border">
         <div className="relative bg-brand-blue px-4 py-4 text-white">
-          <h2 className="text-base font-extrabold uppercase tracking-wide">{category.title}</h2>
+          <h2 className="text-base font-extrabold uppercase tracking-wide">{posterTitle}</h2>
           <p className="text-xs opacity-85">📅 {formatPosterDate()}</p>
           <p className="text-xs opacity-85">{list.length} available</p>
         </div>
@@ -405,7 +439,7 @@ function Generator() {
         className="sticky bottom-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-green py-3.5 text-sm font-semibold text-white shadow-lg disabled:opacity-60"
       >
         {sharing ? <Loader2 className="size-4 animate-spin" /> : <Share2 className="size-4" />}
-        {sharing ? "Rendering poster…" : "Share to WhatsApp (image only)"}
+        {sharing ? "Rendering poster…" : "Share listing image"}
       </button>
     </div>
   );

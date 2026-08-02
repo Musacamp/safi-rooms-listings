@@ -1,27 +1,49 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useInfiniteQuery, infiniteQueryOptions } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { z } from "zod";
-import { ShieldCheck, Phone, MessageCircle, Lock } from "lucide-react";
+import { ShieldCheck, Phone, MessageCircle, Lock, Loader2 } from "lucide-react";
 import { getFeaturedListings, getPublicStats, listListings } from "@/lib/listings.functions";
 import { logSiteVisitOnce } from "@/lib/track";
 import { ListingCard } from "@/components/ListingCard";
 import { FeaturedCard } from "@/components/FeaturedCard";
 import { FilterBar } from "@/components/FilterBar";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { CONTACT_PHONE_DISPLAY, TEL_URL, WHATSAPP_URL } from "@/lib/constants";
+import { CONTACT_PHONE_DISPLAY, PRICE_BANDS, TEL_URL, WHATSAPP_URL } from "@/lib/constants";
 import markAsset from "@/assets/safirooms-mark.png.asset.json";
-
 
 const searchSchema = z.object({
   type: z.string().optional(),
   q: z.string().optional(),
-  location: z.string().optional(),
+  loc: z.string().optional(),
+  band: z.string().optional(),
+  am: z.string().optional(),
+  avail: z.string().optional(),
+  verified: z.boolean().optional(),
+  recent: z.boolean().optional(),
   min: z.number().optional(),
   max: z.number().optional(),
-  recent: z.boolean().optional(),
 });
+
+type HomeSearch = z.infer<typeof searchSchema>;
+
+const PAGE = 20;
+
+function toFilters(s: HomeSearch) {
+  const band = PRICE_BANDS.find((b) => b.key === s.band);
+  return {
+    type: s.type,
+    q: s.q,
+    locations: s.loc ? s.loc.split(",").filter(Boolean) : undefined,
+    amenities: s.am ? s.am.split(",").filter(Boolean) : undefined,
+    verified: s.verified,
+    recent: s.recent,
+    available: s.avail === "available" ? true : s.avail === "occupied" ? false : undefined,
+    min: band?.min ?? s.min,
+    max: band?.max ?? s.max,
+  };
+}
 
 const featuredOpts = queryOptions({
   queryKey: ["featured"],
@@ -31,11 +53,18 @@ const statsOpts = queryOptions({
   queryKey: ["stats"],
   queryFn: () => getPublicStats(),
 });
-const listingsOpts = (params: z.infer<typeof searchSchema>) =>
-  queryOptions({
-    queryKey: ["listings", params],
-    queryFn: () => listListings({ data: params }),
+const listingsOpts = (params: HomeSearch) => {
+  const filters = toFilters(params);
+  return infiniteQueryOptions({
+    queryKey: ["listings", filters],
+    queryFn: ({ pageParam }) =>
+      listListings({ data: { ...filters, limit: PAGE, offset: pageParam as number } }),
+    initialPageParam: 0,
+    getNextPageParam: (last, all) =>
+      last.length < PAGE ? undefined : all.reduce((n, p) => n + p.length, 0),
+    staleTime: 30_000,
   });
+};
 
 export const Route = createFileRoute("/")({
   validateSearch: (s) => searchSchema.parse(s),
@@ -43,22 +72,24 @@ export const Route = createFileRoute("/")({
   loader: ({ context, deps }) => {
     context.queryClient.ensureQueryData(featuredOpts);
     context.queryClient.ensureQueryData(statsOpts);
-    context.queryClient.ensureQueryData(listingsOpts(deps));
+    context.queryClient.ensureInfiniteQueryData(listingsOpts(deps));
   },
   head: () => ({
     meta: [
-      { title: "SafiRooms" },
+      { title: "SafiRooms — Rooms & Rentals in Uganda" },
       {
         name: "description",
         content:
-          "Browse trusted rental listings across Uganda. Filter by room type, location, and rent. Call or WhatsApp to book instantly.",
+          "Browse trusted rental listings across Uganda. Filter by property type, area, and rent. Call or WhatsApp to book instantly.",
       },
-      { property: "og:title", content: "SafiRooms" },
+      { property: "og:title", content: "SafiRooms — Rooms & Rentals in Uganda" },
       {
         property: "og:description",
         content:
-          "Browse trusted rental listings across Uganda. Filter by room type, location, and rent. Call or WhatsApp to book instantly.",
+          "Browse trusted rental listings across Uganda. Filter by property type, area, and rent. Call or WhatsApp to book instantly.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Home,
@@ -68,13 +99,26 @@ function Home() {
   const search = Route.useSearch();
   const { data: featured } = useSuspenseQuery(featuredOpts);
   const { data: stats } = useSuspenseQuery(statsOpts);
-  const { data: listings } = useQuery(listingsOpts(search));
+  const infinite = useInfiniteQuery(listingsOpts(search));
+  const sentinel = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     logSiteVisitOnce();
   }, []);
 
-  const rows = listings ?? [];
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && infinite.hasNextPage && !infinite.isFetchingNextPage) {
+        infinite.fetchNextPage();
+      }
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [infinite.hasNextPage, infinite.isFetchingNextPage, infinite.fetchNextPage]);
+
+  const rows = useMemo(() => infinite.data?.pages.flat() ?? [], [infinite.data]);
 
   return (
     <div className="min-h-screen bg-surface pb-24">
@@ -159,25 +203,31 @@ function Home() {
           </section>
         )}
 
-        <section className="px-4">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">
-              {search.recent ? "Newly Added · " : ""}
-              {rows.length} {rows.length === 1 ? "listing" : "listings"}
-              {search.recent ? " in the last 5 days" : ""}
+        <section className="px-3">
+          <div className="mb-1.5 flex items-center justify-between">
+            <h2 className="text-[13px] font-semibold text-foreground">
+              {search.recent ? "Newly added · " : ""}
+              {rows.length}
+              {infinite.hasNextPage ? "+" : ""} {rows.length === 1 ? "listing" : "listings"}
             </h2>
           </div>
-          {rows.length === 0 ? (
-            <div className="rounded-2xl bg-card p-8 text-center ring-1 ring-border">
-              <p className="text-sm text-muted-foreground">
+          {rows.length === 0 && !infinite.isFetching ? (
+            <div className="rounded-xl bg-card p-8 text-center ring-1 ring-border">
+              <p className="text-[13px] text-muted-foreground">
                 No listings match your filters. Try clearing them.
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
               {rows.map((l) => (
                 <ListingCard key={l.id} listing={l} />
               ))}
+            </div>
+          )}
+          <div ref={sentinel} className="h-8" />
+          {infinite.isFetchingNextPage && (
+            <div className="grid place-items-center py-2 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
             </div>
           )}
         </section>

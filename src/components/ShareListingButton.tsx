@@ -24,7 +24,8 @@ export function ShareListingButton({
   const onShare = async () => {
     setBusy(true);
     try {
-      const blob = await buildListingShareImage(listing);
+      const link = typeof window !== "undefined" ? window.location.href : undefined;
+      const blob = await buildListingShareImage(listing, link);
       const file = blob
         ? new File([blob], `safirooms-${listing.id}.png`, { type: "image/png" })
         : null;
@@ -41,9 +42,8 @@ export function ShareListingButton({
         a.download = `safirooms-${listing.id}.png`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 5000);
-        toast.success("Image saved — attach it in WhatsApp");
+        toast.success("Image saved — attach it in any app");
       }
-      window.open(`https://wa.me/?text=${encodeURIComponent(caption)}`, "_blank", "noreferrer");
     } catch (e: any) {
       if (e?.name !== "AbortError") toast.error("Could not create the share image");
     } finally {
@@ -56,7 +56,7 @@ export function ShareListingButton({
       type="button"
       onClick={onShare}
       disabled={busy}
-      aria-label="Share this room on WhatsApp"
+      aria-label="Share this room"
       className={
         "inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-green px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-60 " +
         className
