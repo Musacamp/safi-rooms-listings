@@ -99,13 +99,26 @@ function Home() {
   const search = Route.useSearch();
   const { data: featured } = useSuspenseQuery(featuredOpts);
   const { data: stats } = useSuspenseQuery(statsOpts);
-  const { data: listings } = useQuery(listingsOpts(search));
+  const infinite = useInfiniteQuery(listingsOpts(search));
+  const sentinel = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     logSiteVisitOnce();
   }, []);
 
-  const rows = listings ?? [];
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && infinite.hasNextPage && !infinite.isFetchingNextPage) {
+        infinite.fetchNextPage();
+      }
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [infinite.hasNextPage, infinite.isFetchingNextPage, infinite.fetchNextPage]);
+
+  const rows = useMemo(() => infinite.data?.pages.flat() ?? [], [infinite.data]);
 
   return (
     <div className="min-h-screen bg-surface pb-24">
