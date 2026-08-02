@@ -20,6 +20,7 @@ import {
   AMENITY_OPTIONS,
   CONTACT_PHONE_DISPLAY,
   LISTING_CATEGORIES,
+  SITE_URL,
   type ListingCategoryKey,
 } from "@/lib/constants";
 import { describeQuery, parseSearchQuery } from "@/lib/search-parse";
@@ -241,7 +242,7 @@ function Generator() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search location, price, amenities, contact"
+          placeholder='Try "Rooms in Pamba below 300k"'
           className="w-full rounded-xl bg-card py-2.5 pl-9 pr-9 text-sm text-foreground ring-1 ring-border outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-blue"
         />
         {q && (
@@ -359,7 +360,7 @@ function Generator() {
       {/* Poster preview */}
       <div className="overflow-hidden rounded-2xl ring-1 ring-border">
         <div className="relative bg-brand-blue px-4 py-4 text-white">
-          <h2 className="text-base font-extrabold uppercase tracking-wide">{category.title}</h2>
+          <h2 className="text-base font-extrabold uppercase tracking-wide">{posterTitle}</h2>
           <p className="text-xs opacity-85">📅 {formatPosterDate()}</p>
           <p className="text-xs opacity-85">{list.length} available</p>
         </div>
@@ -438,7 +439,7 @@ function Generator() {
         className="sticky bottom-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-green py-3.5 text-sm font-semibold text-white shadow-lg disabled:opacity-60"
       >
         {sharing ? <Loader2 className="size-4 animate-spin" /> : <Share2 className="size-4" />}
-        {sharing ? "Rendering poster…" : "Share to WhatsApp (image only)"}
+        {sharing ? "Rendering poster…" : "Share listing image"}
       </button>
     </div>
   );
