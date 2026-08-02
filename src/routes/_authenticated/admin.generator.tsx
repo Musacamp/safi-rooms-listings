@@ -60,8 +60,8 @@ function Generator() {
   const list = useMemo(() => {
     const all = rooms.data ?? [];
     const term = parsed.rest.trim().toLowerCase();
-    const min = parsed.min ?? Number(minRent) || 0;
-    const max = parsed.max ?? Number(maxRent) || Infinity;
+    const min = parsed.min ?? (Number(minRent) || 0);
+    const max = parsed.max ?? (Number(maxRent) || Infinity);
     const dep = Number(maxDeposit) || Infinity;
     const since = addedDays ? Date.now() - addedDays * 86400000 : 0;
     const locs = parsed.locations.length
