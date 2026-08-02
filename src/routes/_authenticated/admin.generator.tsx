@@ -141,6 +141,22 @@ function Generator() {
     is_verified: l.is_verified,
   }));
 
+  const filterLink = useMemo(() => {
+    const p = new URLSearchParams();
+    if (!smart || parsed.type) p.set("type", effectiveCat);
+    const locs = parsed.locations.length ? parsed.locations : location ? [location] : [];
+    if (locs.length) p.set("loc", locs.join(","));
+    const min = parsed.min ?? (Number(minRent) || undefined);
+    const max = parsed.max ?? (Number(maxRent) || undefined);
+    if (min) p.set("min", String(min));
+    if (max) p.set("max", String(max));
+    if (amenities.length) p.set("am", amenities.join(","));
+    if (verifiedOnly) p.set("verified", "true");
+    p.set("avail", "available");
+    const qs = p.toString();
+    return qs ? `${SITE_URL}/?${qs}` : SITE_URL;
+  }, [smart, parsed, effectiveCat, location, minRent, maxRent, amenities, verifiedOnly]);
+
   const share = async () => {
     if (!posterRooms.length) {
       toast.error("No available rooms in this category");
@@ -148,9 +164,13 @@ function Generator() {
     }
     setSharing(true);
     try {
-      const blob = await buildPosterImage({ title: category.title, rooms: posterRooms });
+      const blob = await buildPosterImage({
+        title: posterTitle,
+        rooms: posterRooms,
+        link: filterLink,
+      });
       if (!blob) throw new Error("Could not render poster");
-      const file = new File([blob], `safirooms-${category.key}.png`, { type: "image/png" });
+      const file = new File([blob], `safirooms-${effectiveCat}.png`, { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file] });
         return;
@@ -161,8 +181,7 @@ function Generator() {
       a.download = file.name;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-      toast.success("Poster saved — attach it in WhatsApp");
-      window.open("https://web.whatsapp.com/", "_blank", "noreferrer");
+      toast.success("Poster saved — attach it in any app");
     } catch (e: any) {
       if (e?.name !== "AbortError") toast.error(e?.message ?? "Could not share the poster");
     } finally {
