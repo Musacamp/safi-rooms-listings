@@ -116,7 +116,7 @@ function Generator() {
   }, [
     rooms.data,
     category,
-    catKeyDep(smart, parsed.type),
+    effectiveCat,
     parsed,
     smart,
     location,
