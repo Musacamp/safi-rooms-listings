@@ -62,6 +62,7 @@ export function PhotoGallery({ photos, alt, overlay, dimmed }: Props) {
                 src={p}
                 alt={`${alt} — photo ${i + 1}`}
                 loading={i === 0 ? "eager" : "lazy"}
+                suppressHydrationWarning
                 className={"size-full object-cover " + (dimmed ? "grayscale-[0.45]" : "")}
               />
             </button>

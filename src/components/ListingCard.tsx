@@ -32,6 +32,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
               height={74}
               loading="lazy"
               decoding="async"
+              suppressHydrationWarning
               className={"size-full object-cover " + (occupied ? "grayscale-[0.55]" : "")}
             />
           ) : (

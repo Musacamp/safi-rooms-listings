@@ -48,6 +48,7 @@ function toFilters(s: HomeSearch) {
 const featuredOpts = queryOptions({
   queryKey: ["featured"],
   queryFn: () => getFeaturedListings(),
+  staleTime: 5 * 60_000,
 });
 const statsOpts = queryOptions({
   queryKey: ["stats"],

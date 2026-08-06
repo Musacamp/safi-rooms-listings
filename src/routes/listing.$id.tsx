@@ -32,11 +32,13 @@ const listingOpts = (id: string) =>
   queryOptions({
     queryKey: ["listing", id],
     queryFn: () => getListing({ data: { id } }),
+    staleTime: 5 * 60_000,
   });
 const similarOpts = (id: string) =>
   queryOptions({
     queryKey: ["similar", id],
     queryFn: () => getSimilarListings({ data: { id } }),
+    staleTime: 5 * 60_000,
   });
 
 export const Route = createFileRoute("/listing/$id")({

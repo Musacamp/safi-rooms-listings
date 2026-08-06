@@ -21,6 +21,7 @@ export function FeaturedCard({ listing }: { listing: Listing }) {
             src={cover}
             alt={listing.title}
             loading="lazy"
+            suppressHydrationWarning
             className={"size-full object-cover " + (occupied ? "grayscale-[0.55]" : "")}
           />
         ) : null}
