@@ -1,22 +1,21 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { z } from "zod";
-import {
-  ArrowLeft,
-  Phone,
-  MessageCircle,
-  MapPin,
-  ShieldCheck,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { ArrowLeft, Phone, MessageCircle, MapPin, ShieldCheck } from "lucide-react";
 import { getListing, getSimilarListings } from "@/lib/listings.functions";
 import { track } from "@/lib/track";
 import { ListingCard } from "@/components/ListingCard";
 import { NotifyMeButton } from "@/components/NotifyMeButton";
-import { formatUGX, relativeDate } from "@/lib/format";
+import { PhotoGallery } from "@/components/PhotoGallery";
+import {
+  formatUGX,
+  relativeDate,
+  isNewListing,
+  daysAgoLabel,
+  formatDateAdded,
+} from "@/lib/format";
 import {
   AMENITY_LABEL,
   ROOM_TYPE_LABEL,
@@ -26,6 +25,7 @@ import {
 } from "@/lib/constants";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ShareListingButton } from "@/components/ShareListingButton";
+
 
 
 const listingOpts = (id: string) =>
