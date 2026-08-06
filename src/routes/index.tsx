@@ -48,6 +48,7 @@ function toFilters(s: HomeSearch) {
 const featuredOpts = queryOptions({
   queryKey: ["featured"],
   queryFn: () => getFeaturedListings(),
+  staleTime: 5 * 60_000,
 });
 const statsOpts = queryOptions({
   queryKey: ["stats"],
@@ -69,11 +70,14 @@ const listingsOpts = (params: HomeSearch) => {
 export const Route = createFileRoute("/")({
   validateSearch: (s) => searchSchema.parse(s),
   loaderDeps: ({ search }) => search,
-  loader: ({ context, deps }) => {
-    context.queryClient.ensureQueryData(featuredOpts);
-    context.queryClient.ensureQueryData(statsOpts);
-    context.queryClient.ensureInfiniteQueryData(listingsOpts(deps));
+  loader: async ({ context, deps }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(featuredOpts),
+      context.queryClient.ensureQueryData(statsOpts),
+      context.queryClient.ensureInfiniteQueryData(listingsOpts(deps)),
+    ]);
   },
+
   head: () => ({
     meta: [
       { title: "SafiRooms — Rooms & Rentals in Uganda" },

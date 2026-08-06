@@ -21,3 +21,32 @@ export function isToday(iso: string): boolean {
   const now = new Date();
   return d.toDateString() === now.toDateString();
 }
+
+/** Whole days since a timestamp (0 = today). */
+export function daysSince(iso: string): number {
+  return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
+}
+
+/** Listings posted within the last 5 days count as "Newly Added". */
+export const NEW_WINDOW_DAYS = 5;
+
+export function isNewListing(iso: string): boolean {
+  return daysSince(iso) < NEW_WINDOW_DAYS;
+}
+
+/** "12 Feb 2026" — stable, short date for cards and detail pages. */
+export function formatDateAdded(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/** "Today", "Yesterday", "3 days ago". */
+export function daysAgoLabel(iso: string): string {
+  const d = daysSince(iso);
+  if (d === 0) return "Today";
+  if (d === 1) return "Yesterday";
+  return `${d} days ago`;
+}

@@ -12,6 +12,8 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { EdgeSwipeNav } from "@/components/EdgeSwipeNav";
+
 
 function NotFoundComponent() {
   return (
@@ -135,8 +137,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
+      <EdgeSwipeNav />
       <Outlet />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );
 }
+
