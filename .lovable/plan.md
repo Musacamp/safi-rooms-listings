@@ -1,81 +1,98 @@
-## SafiRooms: Density + Search + Share Redesign
+# SafiRooms: Portal Polish + Revenue Dashboard
 
-Scope: sections 1–8. Section 9 extras deferred (favourites, map, trending, search analytics). Natural-language search is a fast rule-based parser (no AI call). Apartment stays as a type.
+Everything below ships in one build, in this order.
 
-### 1. Property types (data)
+## 1. Occupied rooms marked clearly
 
-Today the database has 5 types: `single`, `double`, `self_contained`, `apartment`, `business`, plus an `is_self_contained` flag added for the generator. `shop` does not exist yet.
+- Red **TAKEN** badge on the top-left of the listing photo (card, featured card, detail page).
+- Rent price stays visible with a single line struck through it, plus the "Occupied" label.
+- Occupied rooms remain in search results and are never hidden — just visually marked, with the Notify Me action instead of Call/WhatsApp.
 
-One migration:
-- Add `shop` to the property-type list.
-- Any remaining `self_contained` rows become Single + self-contained flag.
+## 2. Smarter generator search
 
-The 7 admin choices become: Single Room · Double Room · Single Self-contained · Double Self-contained · Apartment · Business Room · Shop. The New/Edit form gets a single "Property type" picker covering all seven (self-contained is stored as the flag behind the scenes, never shown as its own generic bucket).
+The generator's natural-language box gains:
 
-### 2. Compact listing card
+- Price ranges: "between 100k and 300k", "100,000-300,000", "under 250k", "from 200k".
+- Combined filters in one phrase: location list + property type + price range + newly added.
+  Example: "Self-contained rooms in Pamba between UGX 100,000-300,000".
+- Explicit control chips next to the box (location, type, min/max price, newly added) that stay in sync with what was typed, so you can fine-tune without retyping.
 
-Rebuild `ListingCard` to a fixed, short height:
+## 3. Newly added category (5 days)
 
-```text
-[ 88px  ] UGX 200,000/month            ✅ Verified
-[ photo ] 📍 Pamba · Single Self-contained
-[  1 left] Deposit UGX 600,000 • Available
-          ✅ Water • ✅ Electricity • ✅ Parking   [📞][WA]
-```
+- A "Newly Added" category in both the client portal filter and the generator, driven by upload date.
+- Each new listing shows a NEW badge, "Added X days ago", and the exact date.
+- Rooms drop out automatically once they pass 5 days — no manual cleanup.
 
-- Rent large/bold, one meta line, one deposit+availability line, one amenity line (truncates with `+2` when it overflows).
-- Tighter padding, thinner dividers, smaller badges; vacancy "N left" stays on the photo corner.
-- Call and WhatsApp become small icon buttons on the same row as amenities, so no extra footer row.
-- Target: 6–10 cards visible per phone screen.
+## 4. Five share image templates
 
-### 3. Client portal search area
+When sharing a single room or a generated list, you get five designs to preview and pick from before sharing:
 
-Below the search bar:
-- **Quick chips**: All · Newly Added · Single · Double · Single Self-contained · Double Self-contained · Apartment · Business · Shops.
-- **Location search** (own input): type "Pamba" to get all Pamba rooms; supports multiple via `+` or comma ("Pamba + Oderai", "Pamba, Oderai, Campswahili"). Autocomplete suggests real locations pulled from the database; popular locations (most listings) show as chips before typing.
-- **Filters sheet**: property type, price band (Under 150k / 150–200k / 200–300k / Above 300k) or custom, amenities (multi-select), availability (Available now / Occupied), and "Safi Verified only".
+1. Minimal — white, lots of space, one strong photo.
+2. Premium — dark navy with gold accents.
+3. Social — bold color blocks, big type, story-sized.
+4. WhatsApp — compact, high-contrast, readable as a thumbnail.
+5. Luxury — full-bleed photo, elegant serif overlay.
 
-All filters live in the URL so results are shareable and update instantly with no page reload.
+All five keep the SafiRooms mark, rent, location, amenities, verified badge, brokerage-fee reminder and the scannable QR/deep link back to the filtered portal. A picker shows thumbnails; tap one, then share to any app via the native share sheet.
 
-### 4. Share system
+## 5. Full-screen photo gallery
 
-- Replace the WhatsApp-only button with the device share sheet (`navigator.share` with a file) — one tap reaches WhatsApp Business, Messenger, Telegram, Instagram, X, Gmail, SMS, Bluetooth, Nearby Share, anything installed. Desktop falls back to download + copy link.
-- Share is **image-only** (no text body), as requested.
+On a room page: swipeable image slider. Tapping a photo opens a full-screen viewer with pinch-to-zoom, double-tap zoom, swipe between photos, swipe-down to close, and chrome hidden while viewing (only a counter and close button).
 
-### 5. Single-listing share image
+## 6. Gesture navigation
 
-Redesign the generated card: SafiRooms branding, rent, location, deposit, availability, amenity ticks, Safi Verified badge, phone number, short site link, and a QR code that opens that room on the portal. Sized for WhatsApp Status / Instagram Story (1080×1920 safe layout). Rendered and cached in-memory per listing so repeat shares are instant.
+- Client portal: swipe in from the left edge opens the admin portal (signed-in admins only; others see nothing).
+- Admin portal: swipe in from the right edge returns to the client portal.
+- Both animate smoothly with a drag-follow reveal and respect reduced-motion settings.
 
-### 6. Smart generator (admin)
+## 7. SafiRooms Revenue dashboard
 
-The Generator page gains a natural-language box above the category tabs. Rule-based parsing handles:
-- locations: "in Pamba", "Pamba and Oderai", "Pamba, Oderai and Campswahili"
-- budget: "below 300k", "under UGX 250,000", "between 150,000 and 250,000"
-- type: single / double / single self-contained / double self-contained / business / shop / apartment
-- any combination: "Single Self-contained in Pamba below 250k"
+New "Revenue" item in the admin menu opening a dedicated dashboard.
 
-It filters live available rooms and produces the matching poster:
-- Title from the query — `🏡 Rooms Available in Pamba & Oderai`, `💰 Rooms Below UGX 300,000`, `🏡 Double Self-contained in Oderai`
-- Date, count of available rooms, compact per-room rows (rent, location, deposit, amenities, Verified badge)
-- Footer with branding, tagline, brokerage reminder, phone, short link, and a **QR code that opens the client portal already filtered to that exact search**
-- Existing six category tabs remain as one-tap presets.
+**Recording**
+- Add an entry: pick a date, amount, and a required source popup (Client payments, Landlord payments, Listing fees, Brokerage fees, Property management, Advertising, Premium listings, Other with custom text), plus optional notes and transaction count.
+- Edit and delete any past entry.
+- Multiple entries per day allowed; each source is stored separately.
 
-Posters paginate into multiple images when a search returns more rooms than fit one page. Generated posters are cached by query so repeat generation is instant.
+**Bulk import for your January-onward history**
+- A paste box that accepts lines or CSV (`date, amount, source, notes`), previews the parsed rows with any problems flagged, then saves them all at once.
 
-### 7. Performance
+**Analytics and graphs**
+- KPI cards: today, this week, this month, this year, lifetime.
+- Charts: daily line, weekly bars, monthly bars, yearly totals, and a growth-trend line.
+- Source breakdown showing which source earns most.
 
-- Listing feed paginates/lazy-loads in pages of 20 with infinite scroll instead of one big fetch.
-- Filtering and search are client-instant (cached query results, debounced input, no refetch when narrowing).
-- Images: explicit sizes, `loading="lazy"`, `decoding="async"`, small thumbnails on cards.
-- Poster/share images cached; canvas work off the critical path.
+**Records board**
+- Best day, week, month and year, each showing the current record, the previous record, and the percentage improvement. Records stay highlighted until beaten.
 
-### Technical notes
+**Revenue calendar**
+- Month calendar with each day colored green (excellent) / blue (good) / yellow (average) / red (low) against your own averages. Tapping a day shows amount, sources, notes and transaction count. Historically strong days are highlighted.
 
-- Migration: extend `room_type` enum with `shop`; normalise legacy `self_contained` rows.
-- `src/lib/constants.ts`: single source of truth for the 7 property types + price bands, replacing the split `ROOM_TYPES` / `LISTING_CATEGORIES` mismatch.
-- `listListings` gains `locations: string[]`, `amenities: string[]`, `available`, `verified`, `selfContained`, `limit/offset`; location matching uses an OR of `ilike` per location. Select strings typed as plain `string` with `.returns<Listing[]>()` to keep typecheck fast.
-- New `getLocationSuggestions` server function for autocomplete/popular locations.
-- `ListingCard`, `FilterBar` rebuilt; new `LocationSearch` component.
-- `src/lib/share-card.ts` reworked for the new single-room design + QR; `src/lib/poster-card.ts` gains query titles, pagination and QR; a tiny QR encoder is added (no heavy dependency).
-- New `src/lib/search-parse.ts` for the rule-based query parser, unit-testable.
-- `ShareListingButton` switched to generic share-sheet, image-only.
+**AI revenue intelligence**
+- Computed predictions: highest-earning days of week, weeks and months, phrased plainly, e.g. "This Tuesday historically performs 82% better than average." Accuracy improves as more months accumulate.
+- Plus an AI-written business brief on top of the numbers covering: best locations, most profitable room categories, top revenue source, average daily income, average monthly growth, slowest periods, fastest-growing month, month-over-month and year-over-year comparisons, longest earning streak, zero-income days, a suggested monthly target, and an end-of-month projection at the current pace.
+
+**Exports**
+- PDF (charts + summary), Excel, and CSV downloads for any date range.
+
+**Notifications**
+- In-app alerts when today beats last week's same weekday, when a weekly or monthly record falls, when revenue drops sharply, and when the day has no entry yet.
+- Matching daily email digests / record alerts to your address.
+
+**Design**
+- KPI cards, responsive charts, subtle animations, professional business palette matched to the existing SafiRooms tokens, mobile-first and fast.
+
+---
+
+## Technical notes
+
+- **Database**: new `revenue_entries` table (date, amount UGX, source enum + custom label, notes, transaction count, created_by) with admin-only RLS and grants; a source enum covering the eight options. Records/streaks/averages are computed server-side in SQL views or aggregate queries so the dashboard loads fast.
+- **Server functions**: `revenue.functions.ts` for CRUD, bulk import, aggregates, records, calendar buckets, predictions; all behind `requireSupabaseAuth` + `assertAdmin`, called from components (not public loaders).
+- **AI brief**: Lovable AI (`google/gemini-3.6-flash`) called from a server function with the aggregated stats as input — never raw table dumps — and cached per day.
+- **Charts**: `recharts` (already installed).
+- **Exports**: CSV/Excel generated client-side; PDF rendered from the dashboard's chart canvases.
+- **Email alerts**: requires a verified sender domain for SafiRooms. If none is configured yet, the in-app alerts ship immediately and email setup runs as a prerequisite step before the digests turn on.
+- **Share templates**: `share-card.ts`/`poster-card.ts` refactored into a renderer registry with one draw function per template, shared QR/branding helpers, and a preview picker component.
+- **Gallery / gestures**: pointer-event based, no new dependency; gallery is a portal overlay with `touch-action: none`.
+- **Search parsing**: `search-parse.ts` extended with price-range and newly-added rules, plus combined-filter output shared by the client portal and generator.
+- Existing SSR hydration mismatches on the home page (time-based "New" flag and signed photo URLs) get fixed as part of this work.
