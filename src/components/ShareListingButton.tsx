@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { Share2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { buildListingShareImage, type ShareListing } from "@/lib/share-card";
+import { Share2 } from "lucide-react";
+import { ShareTemplatePicker } from "@/components/ShareTemplatePicker";
+import {
+  renderListingShare,
+  type ShareListing,
+  type ShareTemplateKey,
+} from "@/lib/share-templates";
 import { formatUGX } from "@/lib/format";
 import { ROOM_TYPE_LABEL } from "@/lib/constants";
 
@@ -12,58 +16,45 @@ export function ShareListingButton({
   listing: ShareListing & { id: string };
   className?: string;
 }) {
-  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const caption =
     `*${listing.title}*\n` +
-    `${formatUGX(listing.rent_ugx)} / month · ${ROOM_TYPE_LABEL[listing.room_type] ?? listing.room_type}\n` +
+    `${formatUGX(listing.rent_ugx)} / month · ${ROOM_TYPE_LABEL[listing.room_type] ?? listing.room_type}` +
+    `${listing.is_available ? "" : " · TAKEN"}\n` +
     `📍 ${listing.location}\n\n` +
     (listing.description ? `${listing.description.slice(0, 300)}\n\n` : "") +
     `View on SafiRooms: ${typeof window !== "undefined" ? window.location.href : ""}`;
 
-  const onShare = async () => {
-    setBusy(true);
-    try {
-      const link = typeof window !== "undefined" ? window.location.href : undefined;
-      const blob = await buildListingShareImage(listing, link);
-      const file = blob
-        ? new File([blob], `safirooms-${listing.id}.png`, { type: "image/png" })
-        : null;
-
-      if (file && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], text: caption, title: listing.title });
-        return;
-      }
-
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `safirooms-${listing.id}.png`;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        toast.success("Image saved — attach it in any app");
-      }
-    } catch (e: any) {
-      if (e?.name !== "AbortError") toast.error("Could not create the share image");
-    } finally {
-      setBusy(false);
-    }
-  };
+  const render = (key: ShareTemplateKey) =>
+    renderListingShare(
+      key,
+      listing,
+      typeof window !== "undefined" ? window.location.href : undefined,
+    );
 
   return (
-    <button
-      type="button"
-      onClick={onShare}
-      disabled={busy}
-      aria-label="Share this room"
-      className={
-        "inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-green px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-60 " +
-        className
-      }
-    >
-      {busy ? <Loader2 className="size-4 animate-spin" /> : <Share2 className="size-4" />}
-      {busy ? "Preparing…" : "Share"}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Share this room"
+        className={
+          "inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-green px-3 py-2.5 text-sm font-semibold text-white " +
+          className
+        }
+      >
+        <Share2 className="size-4" />
+        Share
+      </button>
+      <ShareTemplatePicker
+        open={open}
+        onClose={() => setOpen(false)}
+        render={render}
+        filename={`safirooms-${listing.id}`}
+        caption={caption}
+        title={listing.title}
+      />
+    </>
   );
 }

@@ -136,6 +136,45 @@ export type Database = {
         }
         Relationships: []
       }
+      revenue_entries: {
+        Row: {
+          amount_ugx: number
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          id: string
+          notes: string | null
+          source: Database["public"]["Enums"]["revenue_source"]
+          source_label: string | null
+          transactions: number
+          updated_at: string
+        }
+        Insert: {
+          amount_ugx?: number
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          id?: string
+          notes?: string | null
+          source?: Database["public"]["Enums"]["revenue_source"]
+          source_label?: string | null
+          transactions?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_ugx?: number
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          id?: string
+          notes?: string | null
+          source?: Database["public"]["Enums"]["revenue_source"]
+          source_label?: string | null
+          transactions?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_visits: {
         Row: {
           created_at: string
@@ -195,6 +234,15 @@ export type Database = {
     }
     Enums: {
       event_kind: "view" | "call" | "whatsapp"
+      revenue_source:
+        | "client_payment"
+        | "landlord_payment"
+        | "listing_fee"
+        | "brokerage_fee"
+        | "property_management"
+        | "advertising"
+        | "premium_listing"
+        | "other"
       room_type:
         | "single"
         | "double"
@@ -330,6 +378,16 @@ export const Constants = {
   public: {
     Enums: {
       event_kind: ["view", "call", "whatsapp"],
+      revenue_source: [
+        "client_payment",
+        "landlord_payment",
+        "listing_fee",
+        "brokerage_fee",
+        "property_management",
+        "advertising",
+        "premium_listing",
+        "other",
+      ],
       room_type: [
         "single",
         "double",
