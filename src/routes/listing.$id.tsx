@@ -1,21 +1,22 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
-import { ArrowLeft, Phone, MessageCircle, MapPin, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Phone,
+  MessageCircle,
+  MapPin,
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { getListing, getSimilarListings } from "@/lib/listings.functions";
 import { track } from "@/lib/track";
 import { ListingCard } from "@/components/ListingCard";
 import { NotifyMeButton } from "@/components/NotifyMeButton";
-import { PhotoGallery } from "@/components/PhotoGallery";
-import {
-  formatUGX,
-  relativeDate,
-  isNewListing,
-  daysAgoLabel,
-  formatDateAdded,
-} from "@/lib/format";
+import { formatUGX, relativeDate } from "@/lib/format";
 import {
   AMENITY_LABEL,
   ROOM_TYPE_LABEL,
@@ -27,18 +28,15 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ShareListingButton } from "@/components/ShareListingButton";
 
 
-
 const listingOpts = (id: string) =>
   queryOptions({
     queryKey: ["listing", id],
     queryFn: () => getListing({ data: { id } }),
-    staleTime: 5 * 60_000,
   });
 const similarOpts = (id: string) =>
   queryOptions({
     queryKey: ["similar", id],
     queryFn: () => getSimilarListings({ data: { id } }),
-    staleTime: 5 * 60_000,
   });
 
 export const Route = createFileRoute("/listing/$id")({
@@ -68,6 +66,7 @@ function ListingPage() {
   const { id } = Route.useParams();
   const { data: listing } = useSuspenseQuery(listingOpts(id));
   const { data: similar } = useQuery(similarOpts(id));
+  const [photoIdx, setPhotoIdx] = useState(0);
 
   useEffect(() => {
     track({ listing_id: id, kind: "view" });
@@ -75,8 +74,8 @@ function ListingPage() {
 
   if (!listing) return null;
   const photos = listing.photos ?? [];
+  const currentPhoto = photos[photoIdx];
   const occupied = !listing.is_available;
-  const isNew = isNewListing(listing.posted_at);
 
   return (
     <div className="min-h-screen bg-surface pb-24">
@@ -97,31 +96,49 @@ function ListingPage() {
 
 
       <div className="mx-auto max-w-3xl">
-        <PhotoGallery
-          photos={photos}
-          alt={listing.title}
-          dimmed={occupied}
-          overlay={
+        <div className="relative aspect-[4/3] w-full bg-muted sm:mt-4 sm:rounded-2xl sm:mx-4 sm:aspect-[16/9] overflow-hidden">
+          {currentPhoto ? (
+            <img src={currentPhoto} alt={listing.title} className="size-full object-cover" />
+          ) : (
+            <div className="grid size-full place-items-center text-xs text-muted-foreground">
+              No photos available
+            </div>
+          )}
+          {photos.length > 1 && (
             <>
-              {occupied ? (
-                <span className="absolute left-3 top-3 rounded-lg bg-red-600 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
-                  Taken
-                </span>
-              ) : (
-                listing.vacancies > 0 && (
-                  <span className="absolute left-3 top-3 rounded-lg bg-brand-green px-2.5 py-1 text-xs font-semibold text-white shadow">
-                    {listing.vacancies} left
-                  </span>
-                )
-              )}
-              {isNew && (
-                <span className="absolute right-3 top-3 rounded-lg bg-brand-blue px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow">
-                  New · {daysAgoLabel(listing.posted_at)}
-                </span>
-              )}
+              <button
+                aria-label="Previous"
+                onClick={() => setPhotoIdx((i) => (i - 1 + photos.length) % photos.length)}
+                className="absolute left-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/40 text-white"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                aria-label="Next"
+                onClick={() => setPhotoIdx((i) => (i + 1) % photos.length)}
+                className="absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/40 text-white"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+              <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
+                {photos.map((_, i) => (
+                  <span
+                    key={i}
+                    className={
+                      "size-1.5 rounded-full " +
+                      (i === photoIdx ? "bg-white" : "bg-white/50")
+                    }
+                  />
+                ))}
+              </div>
             </>
-          }
-        />
+          )}
+          {listing.is_available && listing.vacancies > 0 && (
+            <span className="absolute left-3 top-3 rounded-lg bg-brand-green px-2.5 py-1 text-xs font-semibold text-white shadow">
+              {listing.vacancies} left
+            </span>
+          )}
+        </div>
 
 
         <section className="px-4 pt-4">
@@ -136,45 +153,29 @@ function ListingPage() {
             <MapPin className="size-3.5" /> {listing.location}
           </p>
           <div className="mt-3 flex items-baseline gap-2">
-            <span
-              className={
-                "text-2xl font-bold text-brand-blue " +
-                (occupied ? "line-through decoration-red-500 decoration-2 opacity-70" : "")
-              }
-            >
-              {formatUGX(listing.rent_ugx)}
-            </span>
+            <span className="text-2xl font-bold text-brand-blue">{formatUGX(listing.rent_ugx)}</span>
             <span className="text-sm text-muted-foreground">/ month</span>
           </div>
           <div className="mt-1 text-xs text-muted-foreground">
             Deposit: {formatUGX(listing.deposit_ugx)} · Posted {relativeDate(listing.posted_at)}
-          </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            Added {formatDateAdded(listing.posted_at)} · {daysAgoLabel(listing.posted_at)}
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="rounded-full bg-brand-blue/10 px-2.5 py-1 text-xs font-medium text-brand-blue">
               {ROOM_TYPE_LABEL[listing.room_type]}
             </span>
-            {isNew && (
-              <span className="rounded-full bg-brand-blue/10 px-2.5 py-1 text-xs font-medium text-brand-blue">
-                Newly added
-              </span>
-            )}
             {listing.is_available ? (
               <span className="rounded-full bg-brand-green/15 px-2.5 py-1 text-xs font-medium text-brand-green">
                 Available now
               </span>
             ) : (
-              <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-red-700 dark:bg-red-500/20 dark:text-red-300">
-                Taken
+              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                Occupied
               </span>
             )}
           </div>
 
         </section>
-
 
 
         <section className="px-4 pt-6">
