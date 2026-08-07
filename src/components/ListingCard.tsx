@@ -1,20 +1,21 @@
 import { Link } from "@tanstack/react-router";
 import { Phone, MessageCircle, MapPin, BadgeCheck, Bell } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
-import { formatUGX } from "@/lib/format";
+import { addedAgoLabel, formatUGX, isNewlyAdded, shortDate } from "@/lib/format";
 import { AMENITY_LABEL, TEL_URL, WHATSAPP_URL, propertyTypeLabel } from "@/lib/constants";
 import { track } from "@/lib/track";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
-
-const NEW_MS = 5 * 24 * 3600 * 1000;
 
 export function ListingCard({ listing }: { listing: Listing }) {
   const cover = listing.photos?.[0];
   const amenities = listing.amenities ?? [];
   const shown = amenities.slice(0, 3);
   const extra = amenities.length - shown.length;
-  const isNew = Date.now() - new Date(listing.posted_at).getTime() < NEW_MS;
+  const hydrated = useHydrated();
+  const isNew = hydrated && isNewlyAdded(listing.posted_at);
+  const occupied = !listing.is_available;
 
   return (
     <div className="relative flex gap-2.5 rounded-xl bg-card p-2 ring-1 ring-border">
@@ -33,24 +34,32 @@ export function ListingCard({ listing }: { listing: Listing }) {
               height={74}
               loading="lazy"
               decoding="async"
-              className="size-full object-cover"
+              className={"size-full object-cover " + (occupied ? "opacity-75 saturate-50" : "")}
             />
           ) : (
             <div className="grid size-full place-items-center text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
               No photo
             </div>
           )}
-          {listing.is_available && listing.vacancies > 0 && (
-            <span className="absolute left-0.5 top-0.5 rounded bg-brand-green px-1 py-px text-[9px] font-semibold leading-tight text-white">
-              {listing.vacancies} left
+          {occupied ? (
+            <span className="absolute left-0.5 top-0.5 rounded bg-red-600 px-1 py-px text-[9px] font-bold uppercase leading-tight tracking-wide text-white">
+              Taken
             </span>
+          ) : (
+            listing.vacancies > 0 && (
+              <span className="absolute left-0.5 top-0.5 rounded bg-brand-green px-1 py-px text-[9px] font-semibold leading-tight text-white">
+                {listing.vacancies} left
+              </span>
+            )
           )}
         </div>
 
         <div className="min-w-0 flex-1 leading-tight">
           <div className="flex items-baseline justify-between gap-2">
             <div className="truncate text-[15px] font-extrabold text-foreground">
-              {formatUGX(listing.rent_ugx)}
+              <span className={occupied ? "text-muted-foreground line-through decoration-red-500 decoration-2" : ""}>
+                {formatUGX(listing.rent_ugx)}
+              </span>
               <span className="ml-0.5 text-[10px] font-medium text-muted-foreground">/month</span>
             </div>
             {listing.is_verified && (
@@ -68,12 +77,14 @@ export function ListingCard({ listing }: { listing: Listing }) {
 
           <p className="truncate text-[11px] text-muted-foreground">
             Deposit {formatUGX(listing.deposit_ugx)} ·{" "}
-            <span
-              className={listing.is_available ? "font-semibold text-brand-green" : "text-amber-600"}
-            >
-              {listing.is_available ? "Available" : "Occupied"}
+            <span className={occupied ? "font-semibold text-red-600" : "font-semibold text-brand-green"}>
+              {occupied ? "Taken" : "Available"}
             </span>
-            {isNew && <span className="ml-1 font-semibold text-brand-blue">· New</span>}
+            {isNew && (
+              <span className="ml-1 font-semibold text-brand-blue">
+                · NEW {addedAgoLabel(listing.posted_at).replace("Added ", "· ")}
+              </span>
+            )}
           </p>
 
           {shown.length > 0 && (
@@ -82,11 +93,16 @@ export function ListingCard({ listing }: { listing: Listing }) {
               {extra > 0 && <span className="text-muted-foreground"> +{extra}</span>}
             </p>
           )}
+          {isNew && (
+            <p className="truncate text-[10px] text-muted-foreground">
+              Uploaded {shortDate(listing.posted_at)}
+            </p>
+          )}
         </div>
       </Link>
 
       <div className="flex shrink-0 flex-col justify-center gap-1">
-        {listing.is_available ? (
+        {!occupied ? (
           <>
             <a
               href={WHATSAPP_URL}
