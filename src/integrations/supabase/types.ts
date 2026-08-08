@@ -301,6 +301,8 @@ export type Database = {
         | "advertising"
         | "premium_listing"
         | "other"
+        | "referral"
+        | "commission"
       room_type:
         | "single"
         | "double"
@@ -446,6 +448,8 @@ export const Constants = {
         "advertising",
         "premium_listing",
         "other",
+        "referral",
+        "commission",
       ],
       room_type: [
         "single",
