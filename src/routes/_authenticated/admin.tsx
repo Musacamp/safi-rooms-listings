@@ -57,6 +57,12 @@ function AdminLayout() {
             icon={<Sparkles className="size-3.5" />}
             label="Generator"
           />
+          <NavLink
+            to="/admin/revenue"
+            icon={<Wallet className="size-3.5" />}
+            label="Revenue"
+          />
+
 
         </nav>
       </header>
