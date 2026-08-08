@@ -136,6 +136,36 @@ export type Database = {
         }
         Relationships: []
       }
+      revenue_audit: {
+        Row: {
+          action: string
+          actor: string | null
+          after_data: Json | null
+          before_data: Json | null
+          created_at: string
+          entry_id: string | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          entry_id?: string | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          entry_id?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       revenue_entries: {
         Row: {
           amount_ugx: number
@@ -171,6 +201,33 @@ export type Database = {
           source?: Database["public"]["Enums"]["revenue_source"]
           source_label?: string | null
           transactions?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      revenue_targets: {
+        Row: {
+          amount_ugx: number
+          created_at: string
+          id: string
+          period: Database["public"]["Enums"]["revenue_period"]
+          period_key: string
+          updated_at: string
+        }
+        Insert: {
+          amount_ugx?: number
+          created_at?: string
+          id?: string
+          period: Database["public"]["Enums"]["revenue_period"]
+          period_key?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_ugx?: number
+          created_at?: string
+          id?: string
+          period?: Database["public"]["Enums"]["revenue_period"]
+          period_key?: string
           updated_at?: string
         }
         Relationships: []
@@ -234,6 +291,7 @@ export type Database = {
     }
     Enums: {
       event_kind: "view" | "call" | "whatsapp"
+      revenue_period: "daily" | "weekly" | "monthly" | "yearly"
       revenue_source:
         | "client_payment"
         | "landlord_payment"
@@ -243,6 +301,8 @@ export type Database = {
         | "advertising"
         | "premium_listing"
         | "other"
+        | "referral"
+        | "commission"
       room_type:
         | "single"
         | "double"
@@ -378,6 +438,7 @@ export const Constants = {
   public: {
     Enums: {
       event_kind: ["view", "call", "whatsapp"],
+      revenue_period: ["daily", "weekly", "monthly", "yearly"],
       revenue_source: [
         "client_payment",
         "landlord_payment",
@@ -387,6 +448,8 @@ export const Constants = {
         "advertising",
         "premium_listing",
         "other",
+        "referral",
+        "commission",
       ],
       room_type: [
         "single",
