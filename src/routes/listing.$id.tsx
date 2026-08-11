@@ -26,6 +26,8 @@ import {
 } from "@/lib/constants";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ShareListingButton } from "@/components/ShareListingButton";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
+import { EdgeSwipeNav } from "@/components/EdgeSwipeNav";
 
 
 const listingOpts = (id: string) =>
@@ -67,6 +69,7 @@ function ListingPage() {
   const { data: listing } = useSuspenseQuery(listingOpts(id));
   const { data: similar } = useQuery(similarOpts(id));
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [viewer, setViewer] = useState(false);
 
   useEffect(() => {
     track({ listing_id: id, kind: "view" });
@@ -98,7 +101,14 @@ function ListingPage() {
       <div className="mx-auto max-w-3xl">
         <div className="relative aspect-[4/3] w-full bg-muted sm:mt-4 sm:rounded-2xl sm:mx-4 sm:aspect-[16/9] overflow-hidden">
           {currentPhoto ? (
-            <img src={currentPhoto} alt={listing.title} className="size-full object-cover" />
+            <button
+              type="button"
+              onClick={() => setViewer(true)}
+              aria-label="Open photo full screen"
+              className="size-full"
+            >
+              <img src={currentPhoto} alt={listing.title} className="size-full object-cover" />
+            </button>
           ) : (
             <div className="grid size-full place-items-center text-xs text-muted-foreground">
               No photos available
@@ -253,6 +263,17 @@ function ListingPage() {
           </section>
         )}
       </div>
+
+      {viewer && photos.length > 0 && (
+        <PhotoLightbox
+          photos={photos}
+          index={photoIdx}
+          alt={listing.title}
+          onIndexChange={setPhotoIdx}
+          onClose={() => setViewer(false)}
+        />
+      )}
+      <EdgeSwipeNav direction="toAdmin" />
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-2 backdrop-blur">
         <div className="mx-auto flex max-w-3xl gap-2">
