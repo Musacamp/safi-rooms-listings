@@ -22,6 +22,7 @@ export function FeaturedCard({ listing }: { listing: Listing }) {
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-muted ring-1 ring-border">
         {cover ? (
           <img
+              suppressHydrationWarning
             src={cover}
             alt={listing.title}
             loading="lazy"

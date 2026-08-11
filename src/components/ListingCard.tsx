@@ -29,6 +29,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="relative size-[74px] shrink-0 overflow-hidden rounded-lg bg-muted">
           {cover ? (
             <img
+              suppressHydrationWarning
               src={cover}
               alt={listing.title}
               width={74}
