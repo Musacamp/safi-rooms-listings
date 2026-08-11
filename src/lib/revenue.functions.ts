@@ -178,3 +178,58 @@ export const listRevenueAudit = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+/**
+ * Sequential daily-collection entry: one authoritative total per calendar day.
+ * Updates the existing row for that date instead of creating a duplicate.
+ */
+export const setDailyCollection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        amount_ugx: z.number().int().min(0).max(1_000_000_000),
+        notes: z.string().max(1000).nullable().default(null),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: existing } = await context.supabase
+      .from("revenue_entries")
+      .select("*")
+      .eq("entry_date", data.entry_date)
+      .order("created_at", { ascending: true });
+
+    const rows = existing ?? [];
+    if (rows.length > 0) {
+      const keep = rows[0];
+      const { data: row, error } = await context.supabase
+        .from("revenue_entries")
+        .update({ amount_ugx: data.amount_ugx, notes: data.notes })
+        .eq("id", keep.id)
+        .select("*")
+        .single();
+      if (error) throw new Error(error.message);
+      await audit(context.supabase, context.userId, "daily_update", keep.id, keep, row);
+      return row;
+    }
+
+    const { data: row, error } = await context.supabase
+      .from("revenue_entries")
+      .insert({
+        entry_date: data.entry_date,
+        amount_ugx: data.amount_ugx,
+        source: "client_payment" as const,
+        source_label: "Daily collection",
+        notes: data.notes,
+        transactions: 1,
+        created_by: context.userId,
+      })
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    await audit(context.supabase, context.userId, "daily_create", row.id, null, row);
+    return row;
+  });

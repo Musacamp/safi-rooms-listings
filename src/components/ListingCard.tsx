@@ -5,6 +5,7 @@ import { addedAgoLabel, formatUGX, isNewlyAdded, shortDate } from "@/lib/format"
 import { AMENITY_LABEL, TEL_URL, WHATSAPP_URL, propertyTypeLabel } from "@/lib/constants";
 import { track } from "@/lib/track";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { ShareListingButton } from "@/components/ShareListingButton";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
@@ -28,6 +29,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="relative size-[74px] shrink-0 overflow-hidden rounded-lg bg-muted">
           {cover ? (
             <img
+              suppressHydrationWarning
               src={cover}
               alt={listing.title}
               width={74}
@@ -133,6 +135,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
             <Bell className="size-4" />
           </Link>
         )}
+        <ShareListingButton listing={listing} iconOnly />
       </div>
     </div>
   );

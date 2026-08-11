@@ -24,6 +24,7 @@ import {
   listRevenueAudit,
   listRevenueEntries,
   listRevenueTargets,
+  setDailyCollection,
   setRevenueTarget,
   updateRevenueEntry,
 } from "@/lib/revenue.functions";
@@ -47,6 +48,7 @@ import { AddEarningSheet, type EarningDraft } from "@/components/revenue/AddEarn
 import { RevenueCalendar } from "@/components/revenue/RevenueCalendar";
 import { RevenueCharts } from "@/components/revenue/RevenueCharts";
 import { BulkImport } from "@/components/revenue/BulkImport";
+import { DailyCollection } from "@/components/revenue/DailyCollection";
 import { exportCsv, exportExcel, exportPdf, filterEntries } from "@/lib/revenue-export";
 
 export const Route = createFileRoute("/_authenticated/admin/revenue")({
@@ -118,6 +120,12 @@ function RevenuePage() {
       refresh();
     },
     onError: (e: unknown) => toast.error((e as Error)?.message ?? "Could not import"),
+  });
+
+  const daily = useMutation({
+    mutationFn: async (d: { entry_date: string; amount_ugx: number }) =>
+      setDailyCollection({ data: { ...d, notes: null } }),
+    onSuccess: () => refresh(),
   });
 
   const target = useMutation({
@@ -389,6 +397,12 @@ function RevenuePage() {
           ))}
         </ul>
       </section>
+
+      <DailyCollection
+        entries={all}
+        onSave={(d) => daily.mutateAsync(d)}
+        saving={daily.isPending}
+      />
 
       <BulkImport onImport={(rows) => bulk.mutateAsync(rows).then(() => undefined)} saving={bulk.isPending} />
 

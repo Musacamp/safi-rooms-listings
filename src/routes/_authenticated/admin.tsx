@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 import { LayoutDashboard, ListPlus, LogOut, Home, Sparkles, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { EdgeSwipeNav } from "@/components/EdgeSwipeNav";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
@@ -69,6 +70,7 @@ function AdminLayout() {
       <div className="mx-auto max-w-5xl px-4 pt-4">
         <Outlet />
       </div>
+      <EdgeSwipeNav direction="toPortal" />
     </div>
   );
 }

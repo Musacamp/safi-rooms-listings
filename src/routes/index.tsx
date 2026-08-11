@@ -1,5 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, useInfiniteQuery, infiniteQueryOptions } from "@tanstack/react-query";
+import {
+  useSuspenseQuery,
+  useSuspenseInfiniteQuery,
+  infiniteQueryOptions,
+} from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
 import { z } from "zod";
@@ -12,6 +16,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CONTACT_PHONE_DISPLAY, PRICE_BANDS, TEL_URL, WHATSAPP_URL } from "@/lib/constants";
 import markAsset from "@/assets/safirooms-mark.png.asset.json";
+import { EdgeSwipeNav } from "@/components/EdgeSwipeNav";
 
 const searchSchema = z.object({
   type: z.string().optional(),
@@ -69,10 +74,10 @@ const listingsOpts = (params: HomeSearch) => {
 export const Route = createFileRoute("/")({
   validateSearch: (s) => searchSchema.parse(s),
   loaderDeps: ({ search }) => search,
-  loader: ({ context, deps }) => {
+  loader: async ({ context, deps }) => {
     context.queryClient.ensureQueryData(featuredOpts);
     context.queryClient.ensureQueryData(statsOpts);
-    context.queryClient.ensureInfiniteQueryData(listingsOpts(deps));
+    await context.queryClient.ensureInfiniteQueryData(listingsOpts(deps));
   },
   head: () => ({
     meta: [
@@ -99,7 +104,7 @@ function Home() {
   const search = Route.useSearch();
   const { data: featured } = useSuspenseQuery(featuredOpts);
   const { data: stats } = useSuspenseQuery(statsOpts);
-  const infinite = useInfiniteQuery(listingsOpts(search));
+  const infinite = useSuspenseInfiniteQuery(listingsOpts(search));
   const sentinel = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -232,6 +237,8 @@ function Home() {
           )}
         </section>
       </div>
+
+      <EdgeSwipeNav direction="toAdmin" />
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-2 backdrop-blur sm:hidden">
         <div className="mx-auto flex max-w-3xl gap-2">
