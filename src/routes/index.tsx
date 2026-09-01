@@ -1,13 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import {
-  useSuspenseQuery,
+  useQuery,
   useSuspenseInfiniteQuery,
   infiniteQueryOptions,
 } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
 import { z } from "zod";
-import { ShieldCheck, Phone, MessageCircle, Lock, Loader2 } from "lucide-react";
+import { ShieldCheck, Phone, MessageCircle, Lock, Loader2, RefreshCw } from "lucide-react";
 import { getFeaturedListings, getPublicStats, listListings } from "@/lib/listings.functions";
 import { logSiteVisitOnce } from "@/lib/track";
 import { ListingCard } from "@/components/ListingCard";
