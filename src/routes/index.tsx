@@ -1,13 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import {
-  useSuspenseQuery,
+  useQuery,
   useSuspenseInfiniteQuery,
   infiniteQueryOptions,
 } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
 import { z } from "zod";
-import { ShieldCheck, Phone, MessageCircle, Lock, Loader2 } from "lucide-react";
+import { ShieldCheck, Phone, MessageCircle, Lock, Loader2, RefreshCw } from "lucide-react";
 import { getFeaturedListings, getPublicStats, listListings } from "@/lib/listings.functions";
 import { logSiteVisitOnce } from "@/lib/track";
 import { ListingCard } from "@/components/ListingCard";
@@ -71,14 +71,56 @@ const listingsOpts = (params: HomeSearch) => {
   });
 };
 
+function HomeError({ error, reset }: { error: Error; reset: () => void }) {
+  console.error(error);
+  const router = useRouter();
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-surface px-6">
+      <div className="max-w-sm text-center">
+        <h1 className="text-base font-bold text-foreground">Listings didn’t load</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We couldn’t reach the listings service just now. You can retry, or call us directly.
+        </p>
+        <div className="mt-5 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-blue px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            <RefreshCw className="size-4" /> Retry
+          </button>
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            <MessageCircle className="size-4" /> WhatsApp {CONTACT_PHONE_DISPLAY}
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/")({
   validateSearch: (s) => searchSchema.parse(s),
   loaderDeps: ({ search }) => search,
   loader: async ({ context, deps }) => {
-    context.queryClient.ensureQueryData(featuredOpts);
-    context.queryClient.ensureQueryData(statsOpts);
-    await context.queryClient.ensureInfiniteQueryData(listingsOpts(deps));
+    // Prefetch only: a backend hiccup must not fail the route. The component
+    // refetches and surfaces a retry state instead of a fatal error screen.
+    try {
+      context.queryClient.ensureQueryData(featuredOpts).catch(() => undefined);
+      context.queryClient.ensureQueryData(statsOpts).catch(() => undefined);
+      await context.queryClient.ensureInfiniteQueryData(listingsOpts(deps));
+    } catch (error) {
+      console.error(error);
+    }
   },
+  errorComponent: HomeError,
   head: () => ({
     meta: [
       { title: "SafiRooms — Rooms & Rentals in Uganda" },
@@ -102,8 +144,10 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const search = Route.useSearch();
-  const { data: featured } = useSuspenseQuery(featuredOpts);
-  const { data: stats } = useSuspenseQuery(statsOpts);
+  // Non-essential sections: a failure here renders them empty instead of
+  // taking the whole page down.
+  const { data: featured = [] } = useQuery(featuredOpts);
+  const { data: stats } = useQuery(statsOpts);
   const infinite = useSuspenseInfiniteQuery(listingsOpts(search));
   const sentinel = useRef<HTMLDivElement | null>(null);
 
@@ -171,7 +215,9 @@ function Home() {
           <div className="rounded-2xl bg-gradient-to-br from-brand-blue to-brand-blue/80 p-4 text-white">
             <h1 className="text-lg font-bold leading-tight">Find your next home in Uganda</h1>
             <p className="mt-1 text-xs text-white/80">
-              {stats.total} listings · {stats.available} available now
+              {stats
+                ? `${stats.total} listings · ${stats.available} available now`
+                : "Verified rooms, apartments and shops"}
             </p>
             <div className="mt-3 flex gap-2">
               <a
