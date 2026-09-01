@@ -33,21 +33,38 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Forbidden: admin access required");
 }
 
+const PHONE_RE = /^[+0-9][0-9 ()/+.-]{5,29}$/;
+
 export const joinWaitlist = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
       .object({
         listing_id: z.string().uuid(),
-        name: z.string().min(1).max(120),
-        phone: z.string().min(5).max(40),
+        name: z
+          .string()
+          .transform((v) => v.trim())
+          .refine((v) => v.length >= 2 && v.length <= 120, "Enter your name"),
+        phone: z
+          .string()
+          .transform((v) => v.trim())
+          .refine(
+            (v) => PHONE_RE.test(v) && v.replace(/\D/g, "").length >= 7,
+            "Enter a valid phone number",
+          ),
       })
       .parse(d),
   )
   .handler(async ({ data }) => {
     const sb = makePublicClient();
     const { error } = await sb.from("waitlist").insert(data);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    if (error) {
+      // Duplicate = same phone already on this listing's waitlist. Treat as success
+      // so repeated submissions can't be used to bulk-fill the table.
+      if (error.code === "23505") return { ok: true, alreadyJoined: true };
+      console.error("[waitlist] insert failed", error);
+      throw new Error("Could not save your request. Please try again.");
+    }
+    return { ok: true, alreadyJoined: false };
   });
 
 export const adminListWaitlist = createServerFn({ method: "GET" })
