@@ -97,6 +97,17 @@ const filtersSchema = z
 
 const sel = (s: string): string => s;
 
+// PostgREST parses .or()/ilike filter strings, so any character with meaning in
+// that grammar (commas, dots, parens, quotes, operators) must be stripped before
+// interpolation. Wildcards are also removed so a search can't widen the match.
+function safeFilterText(input: string): string {
+  return input
+    .replace(/[,.()"'\\%*:{}[\]]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
+}
+
 export const listListings = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => filtersSchema.parse(d ?? {}))
   .handler(async ({ data }) => {
