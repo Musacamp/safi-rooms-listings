@@ -215,7 +215,9 @@ function Home() {
           <div className="rounded-2xl bg-gradient-to-br from-brand-blue to-brand-blue/80 p-4 text-white">
             <h1 className="text-lg font-bold leading-tight">Find your next home in Uganda</h1>
             <p className="mt-1 text-xs text-white/80">
-              {stats.total} listings · {stats.available} available now
+              {stats
+                ? `${stats.total} listings · ${stats.available} available now`
+                : "Verified rooms, apartments and shops"}
             </p>
             <div className="mt-3 flex gap-2">
               <a
