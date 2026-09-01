@@ -42,6 +42,39 @@ const similarOpts = (id: string) =>
     queryFn: () => getSimilarListings({ data: { id } }),
   });
 
+function ListingError({ error, reset }: { error: Error; reset: () => void }) {
+  console.error(error);
+  const router = useRouter();
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-surface px-6">
+      <div className="max-w-sm text-center">
+        <h1 className="text-base font-bold text-foreground">This listing didn’t load</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The listings service didn’t respond. Retry, or browse the other rooms.
+        </p>
+        <div className="mt-5 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-blue px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            <RefreshCw className="size-4" /> Retry
+          </button>
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center rounded-xl border border-input bg-background px-4 py-2.5 text-sm font-medium text-foreground"
+          >
+            Browse rooms
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/listing/$id")({
   params: {
     parse: (p) => z.object({ id: z.string().uuid() }).parse(p),
@@ -50,8 +83,9 @@ export const Route = createFileRoute("/listing/$id")({
   loader: async ({ context, params }) => {
     const l = await context.queryClient.ensureQueryData(listingOpts(params.id));
     if (!l) throw notFound();
-    context.queryClient.ensureQueryData(similarOpts(params.id));
+    context.queryClient.ensureQueryData(similarOpts(params.id)).catch(() => undefined);
   },
+  errorComponent: ListingError,
   head: ({ loaderData }) => {
     void loaderData;
     return {
