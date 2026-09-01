@@ -144,8 +144,10 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const search = Route.useSearch();
-  const { data: featured } = useSuspenseQuery(featuredOpts);
-  const { data: stats } = useSuspenseQuery(statsOpts);
+  // Non-essential sections: a failure here renders them empty instead of
+  // taking the whole page down.
+  const { data: featured = [] } = useQuery(featuredOpts);
+  const { data: stats } = useQuery(statsOpts);
   const infinite = useSuspenseInfiniteQuery(listingsOpts(search));
   const sentinel = useRef<HTMLDivElement | null>(null);
 
