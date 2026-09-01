@@ -97,6 +97,17 @@ const filtersSchema = z
 
 const sel = (s: string): string => s;
 
+// PostgREST parses .or()/ilike filter strings, so any character with meaning in
+// that grammar (commas, dots, parens, quotes, operators) must be stripped before
+// interpolation. Wildcards are also removed so a search can't widen the match.
+function safeFilterText(input: string): string {
+  return input
+    .replace(/[,.()"'\\%*:{}[\]]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
+}
+
 export const listListings = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => filtersSchema.parse(d ?? {}))
   .handler(async ({ data }) => {
@@ -116,10 +127,13 @@ export const listListings = createServerFn({ method: "GET" })
       if (pt.self !== null) q = q.eq("is_self_contained", pt.self);
     }
 
-    const locs = (data.locations ?? []).concat(data.location ? [data.location] : []).filter(Boolean);
+    const locs = (data.locations ?? [])
+      .concat(data.location ? [data.location] : [])
+      .map(safeFilterText)
+      .filter(Boolean);
     if (locs.length === 1) q = q.ilike("location", `%${locs[0]}%`);
     else if (locs.length > 1) {
-      q = q.or(locs.map((l) => `location.ilike.%${l.replace(/[,()]/g, "")}%`).join(","));
+      q = q.or(locs.map((l) => `location.ilike.%${l}%`).join(","));
     }
 
     if (typeof data.min === "number") q = q.gte("rent_ugx", data.min);
@@ -127,10 +141,9 @@ export const listListings = createServerFn({ method: "GET" })
     if (data.amenities?.length) q = q.contains("amenities", data.amenities);
     if (typeof data.available === "boolean") q = q.eq("is_available", data.available);
     if (data.verified) q = q.eq("is_verified", true);
-    if (data.q)
-      q = q.or(
-        `title.ilike.%${data.q}%,description.ilike.%${data.q}%,location.ilike.%${data.q}%`,
-      );
+    const term = data.q ? safeFilterText(data.q) : "";
+    if (term)
+      q = q.or(`title.ilike.%${term}%,description.ilike.%${term}%,location.ilike.%${term}%`);
     if (data.recent) {
       const since = new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString();
       q = q.gte("posted_at", since);

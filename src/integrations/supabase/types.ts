@@ -287,7 +287,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      [_ in never]: never
     }
     Enums: {
       event_kind: "view" | "call" | "whatsapp"
