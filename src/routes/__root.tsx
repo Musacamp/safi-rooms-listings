@@ -113,10 +113,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const runtimeConfig = runtimeConfigScript();
   return (
     <html lang="en">
       <head>
         <HeadContent />
+        {runtimeConfig ? (
+          <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: runtimeConfig }} />
+        ) : null}
         <script
           dangerouslySetInnerHTML={{
             __html: `try{var t=localStorage.getItem('safirooms-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}`,
