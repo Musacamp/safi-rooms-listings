@@ -3,7 +3,6 @@ import { Phone, MessageCircle, MapPin, BadgeCheck, Bell } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { addedAgoLabel, formatUGX, isNewlyAdded, shortDate } from "@/lib/format";
 import { AMENITY_LABEL, TEL_URL, WHATSAPP_URL, propertyTypeLabel } from "@/lib/constants";
-import { track } from "@/lib/track";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { ShareListingButton } from "@/components/ShareListingButton";
 
@@ -24,7 +23,6 @@ export function ListingCard({ listing }: { listing: Listing }) {
         to="/listing/$id"
         params={{ id: listing.id }}
         className="min-w-0 flex flex-1 gap-2.5"
-        onClick={() => track({ listing_id: listing.id, kind: "view" })}
       >
         <div className="relative size-[74px] shrink-0 overflow-hidden rounded-lg bg-muted">
           {cover ? (
