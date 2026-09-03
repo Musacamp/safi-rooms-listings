@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
+import { runtimeConfigScript } from "../lib/public-config";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
