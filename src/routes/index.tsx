@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter, useHydrated } from "@tanstack/react-router";
 import {
   useQuery,
   useSuspenseInfiniteQuery,
@@ -149,6 +149,7 @@ function Home() {
   const search = Route.useSearch();
   // Non-essential sections: a failure here renders them empty instead of
   // taking the whole page down.
+  const hydrated = useHydrated();
   const { data: featured = [] } = useQuery(featuredOpts);
   const { data: stats } = useQuery(statsOpts);
   const infinite = useSuspenseInfiniteQuery(listingsOpts(search));
@@ -244,7 +245,7 @@ function Home() {
 
         <FilterBar />
 
-        {featured.length > 0 && !search.type && !search.q && !search.recent && (
+        {hydrated && featured.length > 0 && !search.type && !search.q && !search.recent && (
           <section className="mb-3">
             <div className="mb-2 flex items-center justify-between px-4">
               <h2 className="text-sm font-semibold text-foreground">Featured</h2>
