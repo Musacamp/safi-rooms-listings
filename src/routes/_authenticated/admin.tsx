@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { LayoutDashboard, ListPlus, LogOut, Home, Sparkles, Wallet } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/browser";
 import { useQueryClient } from "@tanstack/react-query";
 import { EdgeSwipeNav } from "@/components/EdgeSwipeNav";
 

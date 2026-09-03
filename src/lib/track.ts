@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/browser";
 import { trackListingEvent } from "./listings.functions";
 import { logVisit } from "./visitors.functions";
 
