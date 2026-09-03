@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/browser";
 import { ShieldCheck, Lock } from "lucide-react";
-import { bootstrapAdmin } from "@/lib/admin-bootstrap.functions";
 import { resetAdminCache } from "@/lib/track";
 
 export const Route = createFileRoute("/auth")({
@@ -35,11 +34,6 @@ function AuthPage() {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      // If no admin exists yet, allow the first sign-in to bootstrap.
-      try {
-        const res = await bootstrapAdmin();
-        if (res.bootstrapped) toast.success("You are now the admin");
-      } catch {}
       // Verify this user is an admin; otherwise sign out.
       const uid = data.user?.id;
       if (uid) {
