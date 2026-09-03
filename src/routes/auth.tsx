@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/browser";
 import { ShieldCheck, Lock } from "lucide-react";
 import { bootstrapAdmin } from "@/lib/admin-bootstrap.functions";
 import { resetAdminCache } from "@/lib/track";

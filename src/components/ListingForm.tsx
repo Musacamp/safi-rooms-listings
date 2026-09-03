@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/browser";
 import { AMENITY_LABEL, AMENITY_OPTIONS, ROOM_TYPES, type RoomTypeValue } from "@/lib/constants";
 import { formatUGX } from "@/lib/format";
 import { X, Upload, Loader2, ArrowLeft, ArrowRight, Star, ChevronDown } from "lucide-react";
