@@ -113,9 +113,12 @@ export const Route = createFileRoute("/")({
     // Prefetch only: a backend hiccup must not fail the route. The component
     // refetches and surfaces a retry state instead of a fatal error screen.
     try {
-      context.queryClient.ensureQueryData(featuredOpts).catch(() => undefined);
-      context.queryClient.ensureQueryData(statsOpts).catch(() => undefined);
-      await context.queryClient.ensureInfiniteQueryData(listingsOpts(deps));
+      // Awaited so SSR markup and the dehydrated cache agree (no hydration mismatch).
+      await Promise.all([
+        context.queryClient.ensureQueryData(featuredOpts).catch(() => undefined),
+        context.queryClient.ensureQueryData(statsOpts).catch(() => undefined),
+        context.queryClient.ensureInfiniteQueryData(listingsOpts(deps)),
+      ]);
     } catch (error) {
       console.error(error);
     }
