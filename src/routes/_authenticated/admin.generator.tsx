@@ -361,8 +361,9 @@ function Generator() {
       <div className="overflow-hidden rounded-2xl ring-1 ring-border">
         <div className="relative bg-brand-blue px-4 py-4 text-white">
           <h2 className="text-base font-extrabold uppercase tracking-wide">{posterTitle}</h2>
-          <p className="text-xs opacity-85">📅 {formatPosterDate()}</p>
-          <p className="text-xs opacity-85">{list.length} available</p>
+          <p className="text-xs font-semibold opacity-90">
+            🛡️ SAFI VERIFIED · 📅 {formatPosterDate()}
+          </p>
         </div>
         <div className="relative bg-surface p-3">
           <img
@@ -380,35 +381,15 @@ function Generator() {
           ) : (
             <div className="relative flex flex-col gap-2">
               {list.map((l) => (
-                <div key={l.id} className="rounded-xl bg-card/95 p-3 ring-1 ring-border">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="text-base font-extrabold text-brand-blue">
-                      {formatUGX(l.rent_ugx)}
-                      <span className="ml-1 text-[11px] font-medium text-muted-foreground">
-                        /month
-                      </span>
-                    </div>
-                    {l.is_verified && (
-                      <span className="shrink-0 rounded-full bg-brand-green px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
-                        Safi Verified
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-foreground">
-                    📍 {l.location}
-                    {l.room_number ? ` · Room ${l.room_number}` : ""}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {[
-                      l.deposit_ugx > 0 ? `Deposit ${formatUGX(l.deposit_ugx)}` : null,
-                      l.distance_from_town ? `${l.distance_from_town} from town` : null,
-                      "Available",
-                    ]
-                      .filter(Boolean)
-                      .join("  ·  ")}
+                <div key={l.id} className="rounded-xl bg-card p-3 ring-1 ring-border">
+                  <div className="flex items-center gap-1.5 text-sm font-extrabold leading-tight text-foreground">
+                    <span>{formatUGX(l.rent_ugx)}</span>
+                    <span className="text-[11px] font-medium text-muted-foreground">/month</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="truncate font-semibold">📍 {l.location}</span>
                   </div>
                   {(l.amenities ?? []).length > 0 && (
-                    <div className="mt-1 text-[11px] font-medium text-brand-green">
+                    <div className="mt-1 text-[11px] font-medium leading-tight text-brand-green">
                       {(l.amenities ?? [])
                         .slice(0, 4)
                         .map((a) => `${AMENITY_LABEL[a] ?? a} ✅`)
