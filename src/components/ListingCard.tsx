@@ -5,6 +5,7 @@ import { addedAgoLabel, formatUGX, isNewlyAdded, shortDate } from "@/lib/format"
 import { AMENITY_LABEL, TEL_URL, WHATSAPP_URL, propertyTypeLabel } from "@/lib/constants";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { ShareListingButton } from "@/components/ShareListingButton";
+import { track } from "@/lib/track";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
