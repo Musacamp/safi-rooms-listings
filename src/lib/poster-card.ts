@@ -61,7 +61,7 @@ function amenityLine(a: string[] | null): string {
   return list.join("  ");
 }
 
-const CARD_H = 190;
+const CARD_H = 150;
 
 export async function buildPosterImage(opts: {
   title: string;
@@ -74,7 +74,7 @@ export async function buildPosterImage(opts: {
   const link = opts.link ?? SITE_URL;
   const dateLabel = formatPosterDate(opts.date ?? new Date());
 
-  const headerH = 250;
+  const headerH = 210;
   const footerH = 330;
   const bodyH = Math.max(CARD_H, rooms.length * (CARD_H + 16));
   const H = headerH + bodyH + footerH;
@@ -115,12 +115,10 @@ export async function buildPosterImage(opts: {
   while (ctx.measureText(heading).width > maxTitleW && heading.length > 8) {
     heading = heading.slice(0, -2);
   }
-  ctx.fillText(heading, PAD, 118);
+  ctx.fillText(heading, PAD, 108);
   ctx.font = "600 34px Inter, system-ui, sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.fillText(`📅 ${dateLabel}`, PAD, 176);
-  ctx.font = "600 28px Inter, system-ui, sans-serif";
-  ctx.fillText(`${rooms.length} available`, PAD, 218);
+  ctx.fillText(`🛡️ SAFI VERIFIED · 📅 ${dateLabel}`, PAD, 166);
   if (logo) {
     const lh = 92;
     const lw = (logo.width / logo.height) * lh;
@@ -138,51 +136,37 @@ export async function buildPosterImage(opts: {
     ctx.stroke();
 
     const x = PAD + 32;
+    const maxLineW = W - PAD * 2 - 64;
 
-    // price
+    // line 1: price + location
     ctx.fillStyle = NAVY;
-    ctx.font = "800 46px Inter, system-ui, sans-serif";
-    ctx.fillText(shortMoney(r.rent_ugx), x, y + 62);
-    const pw = ctx.measureText(shortMoney(r.rent_ugx)).width;
+    ctx.font = "800 42px Inter, system-ui, sans-serif";
+    const priceText = shortMoney(r.rent_ugx);
+    ctx.fillText(priceText, x, y + 58);
+    const pw = ctx.measureText(priceText).width;
+
     ctx.fillStyle = MUTED;
-    ctx.font = "500 26px Inter, system-ui, sans-serif";
-    ctx.fillText("/month", x + pw + 12, y + 62);
+    ctx.font = "500 24px Inter, system-ui, sans-serif";
+    ctx.fillText("/month", x + pw + 10, y + 58);
+    const mw = ctx.measureText("/month").width;
 
-    // verified badge
-    if (r.is_verified) {
-      ctx.font = "700 22px Inter, system-ui, sans-serif";
-      const label = "SAFI VERIFIED";
-      const bw = ctx.measureText(label).width + 32;
-      ctx.fillStyle = GREEN;
-      roundRect(ctx, W - PAD - 32 - bw, y + 30, bw, 44, 14);
-      ctx.fill();
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(label, W - PAD - 32 - bw + 16, y + 60);
-    }
-
-    // location + room number
+    let loc = `· 📍 ${r.location}`;
     ctx.fillStyle = INK;
-    ctx.font = "700 32px Inter, system-ui, sans-serif";
-    const loc = r.room_number ? `📍 ${r.location} · Room ${r.room_number}` : `📍 ${r.location}`;
-    ctx.fillText(loc, x, y + 108);
+    ctx.font = "700 30px Inter, system-ui, sans-serif";
+    const sepW = ctx.measureText(" · ").width;
+    const used = pw + mw + sepW;
+    while (ctx.measureText(loc).width + used > maxLineW && loc.length > 10) {
+      loc = loc.slice(0, -2);
+    }
+    if (loc.length < `· 📍 ${r.location}`.length && !loc.endsWith("…")) loc += "…";
+    ctx.fillText(loc, x + pw + mw + 14, y + 58);
 
-    // meta line
-    ctx.fillStyle = MUTED;
-    ctx.font = "500 25px Inter, system-ui, sans-serif";
-    const meta = [
-      r.deposit_ugx > 0 ? `Deposit ${shortMoney(r.deposit_ugx)}` : null,
-      r.distance_from_town ? `${r.distance_from_town} from town` : null,
-      r.is_available ? "Available" : "Occupied",
-    ]
-      .filter(Boolean)
-      .join("  ·  ");
-    ctx.fillText(meta, x, y + 146);
-
+    // line 2: amenities
     const am = amenityLine(r.amenities);
     if (am) {
       ctx.fillStyle = GREEN;
-      ctx.font = "600 24px Inter, system-ui, sans-serif";
-      ctx.fillText(am, x, y + 176);
+      ctx.font = "600 26px Inter, system-ui, sans-serif";
+      ctx.fillText(am, x, y + 106);
     }
 
     y += CARD_H + 16;
