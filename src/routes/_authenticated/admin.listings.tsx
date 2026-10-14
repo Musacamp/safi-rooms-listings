@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   adminListListings,
   deleteListing,
@@ -20,7 +20,34 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/browser";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
+import type { Database } from "@/integrations/supabase/types";
 
+type Listing = Database["public"]["Tables"]["listings"]["Row"];
+
+const PHOTO_BUCKET = "listing-photos";
+
+// Signed-URL cache shared across renders and the 30s refetch so the same
+// storage paths are never signed twice.
+const signedUrlCache = new Map<string, string>();
+
+async function ensureSignedUrls(paths: string[]): Promise<Record<string, string>> {
+  const need = paths.filter((p) => p && !/^https?:\/\//.test(p) && !signedUrlCache.has(p));
+  if (need.length) {
+    const { data } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(need, 60 * 60 * 24 * 7);
+    data?.forEach((d, i) => {
+      if (d.signedUrl) signedUrlCache.set(need[i], d.signedUrl);
+    });
+  }
+  const out: Record<string, string> = {};
+  for (const p of paths) {
+    if (!p) continue;
+    const url = /^https?:\/\//.test(p) ? p : signedUrlCache.get(p);
+    if (url) out[p] = url;
+  }
+  return out;
+}
 
 export const Route = createFileRoute("/_authenticated/admin/listings")({
   component: AdminListings,
@@ -34,6 +61,19 @@ function AdminListings() {
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   });
+
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const all = (listings.data ?? []).flatMap((l) => l.photos ?? []);
+    if (!all.length) return;
+    let alive = true;
+    ensureSignedUrls(all).then((urls) => {
+      if (alive) setPhotoUrls((prev) => ({ ...prev, ...urls }));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [listings.data]);
 
   const [filter, setFilter] = useState<"all" | "active" | "archived">("all");
   const [q, setQ] = useState("");
@@ -164,75 +204,143 @@ function AdminListings() {
           <p className="p-6 text-center text-sm text-muted-foreground">No listings.</p>
         ) : (
           rows.map((l) => (
-            <div
+            <AdminListingRow
               key={l.id}
-              className="flex flex-col gap-3 border-b border-border p-3 last:border-none sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="truncate text-sm font-medium text-foreground">{l.title}</span>
-                  {l.is_featured && (
-                    <span className="rounded bg-brand-blue/10 px-1.5 py-0.5 text-[10px] font-medium text-brand-blue">
-                      Featured
-                    </span>
-                  )}
-                  {l.is_archived && (
-                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      Archived
-                    </span>
-                  )}
-                  {!l.is_available && !l.is_archived && (
-                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
-                      Occupied
-                    </span>
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {ROOM_TYPE_LABEL[l.room_type]} · {l.location} · {formatUGX(l.rent_ugx)} · views{" "}
-                  {l.views_count} · calls {l.calls_count} · wa {l.whatsapp_count}
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                <IconBtn
-                  title={l.is_available ? "Mark occupied" : "Mark available"}
-                  onClick={() => toggle(l.id, { is_available: !l.is_available })}
-                >
-                  {l.is_available ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </IconBtn>
-                <IconBtn
-                  title={l.is_featured ? "Unfeature" : "Feature"}
-                  onClick={() => toggle(l.id, { is_featured: !l.is_featured })}
-                >
-                  <Star
-                    className={"size-4 " + (l.is_featured ? "fill-brand-blue text-brand-blue" : "")}
-                  />
-                </IconBtn>
-                <IconBtn
-                  title={l.is_archived ? "Restore" : "Archive"}
-                  onClick={() => toggle(l.id, { is_archived: !l.is_archived })}
-                >
-                  {l.is_archived ? (
-                    <ArchiveRestore className="size-4" />
-                  ) : (
-                    <Archive className="size-4" />
-                  )}
-                </IconBtn>
-                <Link
-                  to="/admin/edit/$id"
-                  params={{ id: l.id }}
-                  title="Edit"
-                  className="grid size-8 place-items-center rounded-lg bg-secondary text-secondary-foreground ring-1 ring-border"
-                >
-                  <Pencil className="size-4" />
-                </Link>
-                <IconBtn title="Delete" onClick={() => remove(l.id)} destructive>
-                  <Trash2 className="size-4" />
-                </IconBtn>
-              </div>
-            </div>
+              l={l}
+              urls={photoUrls}
+              onToggle={toggle}
+              onRemove={remove}
+            />
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+function AdminListingRow({
+  l,
+  urls,
+  onToggle,
+  onRemove,
+}: {
+  l: Listing;
+  urls: Record<string, string>;
+  onToggle: (
+    id: string,
+    patch: { is_available?: boolean; is_featured?: boolean; is_archived?: boolean },
+  ) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [lightbox, setLightbox] = useState(false);
+  const [idx, setIdx] = useState(0);
+  const resolved = (l.photos ?? []).map((p) => urls[p]).filter(Boolean);
+  const cover = resolved[0];
+
+  return (
+    <div className="flex flex-col gap-3 border-b border-border p-3 last:border-none sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-1 gap-3">
+        <button
+          type="button"
+          title={resolved.length ? "View photos" : "No photos"}
+          aria-label={resolved.length ? `View photos of ${l.title}` : "No photos"}
+          onClick={() => {
+            if (!resolved.length) return;
+            setIdx(0);
+            setLightbox(true);
+          }}
+          className={
+            "size-14 shrink-0 overflow-hidden rounded-lg bg-muted ring-1 ring-border " +
+            (resolved.length ? "cursor-zoom-in" : "cursor-default")
+          }
+        >
+          {cover ? (
+            <img
+              src={cover}
+              alt=""
+              width={56}
+              height={56}
+              loading="lazy"
+              decoding="async"
+              className="size-full object-cover"
+            />
+          ) : (
+            <span className="grid size-full place-items-center text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+              No photo
+            </span>
+          )}
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="truncate text-sm font-medium text-foreground">{l.title}</span>
+            {l.is_featured && (
+              <span className="rounded bg-brand-blue/10 px-1.5 py-0.5 text-[10px] font-medium text-brand-blue">
+                Featured
+              </span>
+            )}
+            {l.is_archived && (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                Archived
+              </span>
+            )}
+            {!l.is_available && !l.is_archived && (
+              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                Occupied
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {ROOM_TYPE_LABEL[l.room_type]} · {l.location} · {formatUGX(l.rent_ugx)} · views{" "}
+            {l.views_count} · calls {l.calls_count} · wa {l.whatsapp_count}
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        <IconBtn
+          title={l.is_available ? "Mark occupied" : "Mark available"}
+          onClick={() => onToggle(l.id, { is_available: !l.is_available })}
+        >
+          {l.is_available ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        </IconBtn>
+        <IconBtn
+          title={l.is_featured ? "Unfeature" : "Feature"}
+          onClick={() => onToggle(l.id, { is_featured: !l.is_featured })}
+        >
+          <Star
+            className={"size-4 " + (l.is_featured ? "fill-brand-blue text-brand-blue" : "")}
+          />
+        </IconBtn>
+        <IconBtn
+          title={l.is_archived ? "Restore" : "Archive"}
+          onClick={() => onToggle(l.id, { is_archived: !l.is_archived })}
+        >
+          {l.is_archived ? (
+            <ArchiveRestore className="size-4" />
+          ) : (
+            <Archive className="size-4" />
+          )}
+        </IconBtn>
+        <Link
+          to="/admin/edit/$id"
+          params={{ id: l.id }}
+          title="Edit"
+          className="grid size-8 place-items-center rounded-lg bg-secondary text-secondary-foreground ring-1 ring-border"
+        >
+          <Pencil className="size-4" />
+        </Link>
+        <IconBtn title="Delete" onClick={() => onRemove(l.id)} destructive>
+          <Trash2 className="size-4" />
+        </IconBtn>
+      </div>
+      {lightbox && resolved.length > 0 && (
+        <PhotoLightbox
+          photos={resolved}
+          index={idx}
+          alt={l.title}
+          onIndexChange={setIdx}
+          onClose={() => setLightbox(false)}
+        />
+      )}
     </div>
   );
 }
