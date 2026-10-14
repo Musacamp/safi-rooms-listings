@@ -204,75 +204,143 @@ function AdminListings() {
           <p className="p-6 text-center text-sm text-muted-foreground">No listings.</p>
         ) : (
           rows.map((l) => (
-            <div
+            <AdminListingRow
               key={l.id}
-              className="flex flex-col gap-3 border-b border-border p-3 last:border-none sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="truncate text-sm font-medium text-foreground">{l.title}</span>
-                  {l.is_featured && (
-                    <span className="rounded bg-brand-blue/10 px-1.5 py-0.5 text-[10px] font-medium text-brand-blue">
-                      Featured
-                    </span>
-                  )}
-                  {l.is_archived && (
-                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      Archived
-                    </span>
-                  )}
-                  {!l.is_available && !l.is_archived && (
-                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
-                      Occupied
-                    </span>
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {ROOM_TYPE_LABEL[l.room_type]} · {l.location} · {formatUGX(l.rent_ugx)} · views{" "}
-                  {l.views_count} · calls {l.calls_count} · wa {l.whatsapp_count}
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                <IconBtn
-                  title={l.is_available ? "Mark occupied" : "Mark available"}
-                  onClick={() => toggle(l.id, { is_available: !l.is_available })}
-                >
-                  {l.is_available ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </IconBtn>
-                <IconBtn
-                  title={l.is_featured ? "Unfeature" : "Feature"}
-                  onClick={() => toggle(l.id, { is_featured: !l.is_featured })}
-                >
-                  <Star
-                    className={"size-4 " + (l.is_featured ? "fill-brand-blue text-brand-blue" : "")}
-                  />
-                </IconBtn>
-                <IconBtn
-                  title={l.is_archived ? "Restore" : "Archive"}
-                  onClick={() => toggle(l.id, { is_archived: !l.is_archived })}
-                >
-                  {l.is_archived ? (
-                    <ArchiveRestore className="size-4" />
-                  ) : (
-                    <Archive className="size-4" />
-                  )}
-                </IconBtn>
-                <Link
-                  to="/admin/edit/$id"
-                  params={{ id: l.id }}
-                  title="Edit"
-                  className="grid size-8 place-items-center rounded-lg bg-secondary text-secondary-foreground ring-1 ring-border"
-                >
-                  <Pencil className="size-4" />
-                </Link>
-                <IconBtn title="Delete" onClick={() => remove(l.id)} destructive>
-                  <Trash2 className="size-4" />
-                </IconBtn>
-              </div>
-            </div>
+              l={l}
+              urls={photoUrls}
+              onToggle={toggle}
+              onRemove={remove}
+            />
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+function AdminListingRow({
+  l,
+  urls,
+  onToggle,
+  onRemove,
+}: {
+  l: Listing;
+  urls: Record<string, string>;
+  onToggle: (
+    id: string,
+    patch: { is_available?: boolean; is_featured?: boolean; is_archived?: boolean },
+  ) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [lightbox, setLightbox] = useState(false);
+  const [idx, setIdx] = useState(0);
+  const resolved = (l.photos ?? []).map((p) => urls[p]).filter(Boolean);
+  const cover = resolved[0];
+
+  return (
+    <div className="flex flex-col gap-3 border-b border-border p-3 last:border-none sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-1 gap-3">
+        <button
+          type="button"
+          title={resolved.length ? "View photos" : "No photos"}
+          aria-label={resolved.length ? `View photos of ${l.title}` : "No photos"}
+          onClick={() => {
+            if (!resolved.length) return;
+            setIdx(0);
+            setLightbox(true);
+          }}
+          className={
+            "size-14 shrink-0 overflow-hidden rounded-lg bg-muted ring-1 ring-border " +
+            (resolved.length ? "cursor-zoom-in" : "cursor-default")
+          }
+        >
+          {cover ? (
+            <img
+              src={cover}
+              alt=""
+              width={56}
+              height={56}
+              loading="lazy"
+              decoding="async"
+              className="size-full object-cover"
+            />
+          ) : (
+            <span className="grid size-full place-items-center text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+              No photo
+            </span>
+          )}
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="truncate text-sm font-medium text-foreground">{l.title}</span>
+            {l.is_featured && (
+              <span className="rounded bg-brand-blue/10 px-1.5 py-0.5 text-[10px] font-medium text-brand-blue">
+                Featured
+              </span>
+            )}
+            {l.is_archived && (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                Archived
+              </span>
+            )}
+            {!l.is_available && !l.is_archived && (
+              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                Occupied
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {ROOM_TYPE_LABEL[l.room_type]} · {l.location} · {formatUGX(l.rent_ugx)} · views{" "}
+            {l.views_count} · calls {l.calls_count} · wa {l.whatsapp_count}
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        <IconBtn
+          title={l.is_available ? "Mark occupied" : "Mark available"}
+          onClick={() => onToggle(l.id, { is_available: !l.is_available })}
+        >
+          {l.is_available ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        </IconBtn>
+        <IconBtn
+          title={l.is_featured ? "Unfeature" : "Feature"}
+          onClick={() => onToggle(l.id, { is_featured: !l.is_featured })}
+        >
+          <Star
+            className={"size-4 " + (l.is_featured ? "fill-brand-blue text-brand-blue" : "")}
+          />
+        </IconBtn>
+        <IconBtn
+          title={l.is_archived ? "Restore" : "Archive"}
+          onClick={() => onToggle(l.id, { is_archived: !l.is_archived })}
+        >
+          {l.is_archived ? (
+            <ArchiveRestore className="size-4" />
+          ) : (
+            <Archive className="size-4" />
+          )}
+        </IconBtn>
+        <Link
+          to="/admin/edit/$id"
+          params={{ id: l.id }}
+          title="Edit"
+          className="grid size-8 place-items-center rounded-lg bg-secondary text-secondary-foreground ring-1 ring-border"
+        >
+          <Pencil className="size-4" />
+        </Link>
+        <IconBtn title="Delete" onClick={() => onRemove(l.id)} destructive>
+          <Trash2 className="size-4" />
+        </IconBtn>
+      </div>
+      {lightbox && resolved.length > 0 && (
+        <PhotoLightbox
+          photos={resolved}
+          index={idx}
+          alt={l.title}
+          onIndexChange={setIdx}
+          onClose={() => setLightbox(false)}
+        />
+      )}
     </div>
   );
 }
