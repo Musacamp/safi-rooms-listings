@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   adminListListings,
   deleteListing,
@@ -20,7 +20,34 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/browser";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
+import type { Database } from "@/integrations/supabase/types";
 
+type Listing = Database["public"]["Tables"]["listings"]["Row"];
+
+const PHOTO_BUCKET = "listing-photos";
+
+// Signed-URL cache shared across renders and the 30s refetch so the same
+// storage paths are never signed twice.
+const signedUrlCache = new Map<string, string>();
+
+async function ensureSignedUrls(paths: string[]): Promise<Record<string, string>> {
+  const need = paths.filter((p) => p && !/^https?:\/\//.test(p) && !signedUrlCache.has(p));
+  if (need.length) {
+    const { data } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(need, 60 * 60 * 24 * 7);
+    data?.forEach((d, i) => {
+      if (d.signedUrl) signedUrlCache.set(need[i], d.signedUrl);
+    });
+  }
+  const out: Record<string, string> = {};
+  for (const p of paths) {
+    if (!p) continue;
+    const url = /^https?:\/\//.test(p) ? p : signedUrlCache.get(p);
+    if (url) out[p] = url;
+  }
+  return out;
+}
 
 export const Route = createFileRoute("/_authenticated/admin/listings")({
   component: AdminListings,
@@ -34,6 +61,19 @@ function AdminListings() {
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   });
+
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const all = (listings.data ?? []).flatMap((l) => l.photos ?? []);
+    if (!all.length) return;
+    let alive = true;
+    ensureSignedUrls(all).then((urls) => {
+      if (alive) setPhotoUrls((prev) => ({ ...prev, ...urls }));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [listings.data]);
 
   const [filter, setFilter] = useState<"all" | "active" | "archived">("all");
   const [q, setQ] = useState("");
