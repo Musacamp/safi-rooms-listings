@@ -1,6 +1,5 @@
 // Temporary type probe — delete after inspection.
-import type { Route } from "@/routes/index";
+import { Route } from "@/routes/index";
 
-type S = ReturnType<typeof Route.useSearch>;
-export const probe = {} as S;
-export const bad: number = probe.type;
+const search = Route.useSearch();
+export const bad: number = search.type;
