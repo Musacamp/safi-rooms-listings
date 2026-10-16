@@ -118,6 +118,9 @@ export const listListings = createServerFn({ method: "GET" })
       .from("listings")
       .select(sel("*"))
       .eq("is_archived", false)
+      // Available rooms first; taken rooms sink to the bottom, newest-first
+      // within each group. PostgREST applies these as primary/secondary sort.
+      .order("is_available", { ascending: false })
       .order("posted_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -179,6 +182,7 @@ export const getFeaturedListings = createServerFn({ method: "GET" }).handler(asy
     .select("*")
     .eq("is_archived", false)
     .eq("is_featured", true)
+    .order("is_available", { ascending: false })
     .order("posted_at", { ascending: false })
     .limit(6);
   if (error) throw new Error(error.message);
@@ -212,6 +216,8 @@ export const getSimilarListings = createServerFn({ method: "GET" })
       .eq("is_archived", false)
       .eq("room_type", base.room_type)
       .neq("id", base.id)
+      .order("is_available", { ascending: false })
+      .order("posted_at", { ascending: false })
       .limit(4);
     return resolveListings(sb, rows ?? []);
   });
