@@ -2,4 +2,5 @@
 import type { Route } from "@/routes/index";
 
 type S = ReturnType<typeof Route.useSearch>;
-export const probe: number = {} as S;
+export const probe = {} as S;
+export const bad: number = probe.type;
