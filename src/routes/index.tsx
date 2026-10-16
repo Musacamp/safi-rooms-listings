@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter, useHydrated } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter, useHydrated, type ErrorComponentProps } from "@tanstack/react-router";
 import {
   useQuery,
   useSuspenseInfiniteQuery,
@@ -71,7 +71,8 @@ const listingsOpts = (params: HomeSearch) => {
   });
 };
 
-function HomeError({ error, reset }: { error: Error; reset: () => void }) {
+function HomeError({ error: rawError, reset }: ErrorComponentProps) {
+  const error = rawError instanceof Error ? rawError : new Error(String(rawError));
   console.error(error);
   const router = useRouter();
   return (
@@ -146,7 +147,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const search = Route.useSearch();
+  // Type-only assertion: recent @tanstack/router versions lose the inferred
+  // search type through createFileRoute; runtime behavior is unchanged.
+  const search = Route.useSearch() as HomeSearch;
   // Non-essential sections: a failure here renders them empty instead of
   // taking the whole page down.
   const hydrated = useHydrated();
