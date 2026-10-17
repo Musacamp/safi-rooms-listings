@@ -71,10 +71,10 @@ export function ListingCard({ listing }: { listing: Listing }) {
             )}
           </div>
 
-          <p className="mt-0.5 flex items-center gap-1 truncate text-[13px] text-muted-foreground">
-            <MapPin className="size-3.5 shrink-0" />
-            <span className="truncate">{listing.location}</span>
-            <span className="shrink-0">· {propertyTypeLabel(listing)}</span>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-1 text-sm">
+            <MapPin className="size-3.5 shrink-0 text-brand-blue" />
+            <span className="min-w-0 break-words font-bold text-brand-blue">{listing.location}</span>
+            <span className="text-[13px] text-muted-foreground">· {propertyTypeLabel(listing)}</span>
           </p>
 
           <p className="truncate text-[13px] text-muted-foreground">

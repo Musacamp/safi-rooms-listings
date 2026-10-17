@@ -100,6 +100,9 @@ export const Route = createFileRoute("/listing/$id")({
         { title: `Listing · SafiRooms` },
         { name: "description", content: `View this Safi Verified listing on SafiRooms.` },
         { property: "og:title", content: "SafiRooms Listing" },
+        { property: "og:description", content: "View room photos, location, rent and amenities, and book a viewing with SafiRooms." },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
       ],
     };
   },
@@ -201,8 +204,8 @@ function ListingPage() {
             </span>
           </div>
           <h1 className="mt-1 text-xl font-bold text-foreground">{listing.title}</h1>
-          <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-            <MapPin className="size-3.5" /> {listing.location}
+          <p className="mt-1 flex items-start gap-1 text-sm font-bold text-brand-blue">
+            <MapPin className="mt-0.5 size-3.5 shrink-0" /> <span className="min-w-0 break-words">{listing.location}</span>
           </p>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-brand-blue">{formatUGX(listing.rent_ugx)}</span>

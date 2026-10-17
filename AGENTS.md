@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Public listing queries use the shared database ordering helper before pagination/limits, with a generated photo-presence column derived from the saved array, so ordering is consistent across pages and updates automatically.
+- WhatsApp text is built by a pure allowlisted-field formatter from the generator's existing filtered list and displayed in a separate editable message component, preserving the image generator and excluding private contact fields.
