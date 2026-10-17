@@ -1,5 +1,4 @@
-/// <reference types="bun" />
-import { expect, test } from "bun:test";
+import { expect, test } from "vitest";
 import { orderPublicListings } from "./public-listing-order";
 
 test("public database sort keeps availability first, photos second and newest third", () => {

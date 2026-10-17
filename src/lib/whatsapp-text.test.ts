@@ -1,5 +1,4 @@
-/// <reference types="bun" />
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { buildWhatsAppText, whatsappTextUrl } from "./whatsapp-text";
 
 const room = { id: "room-id", location: "Pamba", rent_ugx: 70000, deposit_ugx: 140000, amenities: ["water", "electricity"] };
