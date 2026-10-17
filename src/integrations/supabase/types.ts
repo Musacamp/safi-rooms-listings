@@ -66,6 +66,7 @@ export type Database = {
           deposit_ugx: number
           description: string
           distance_from_town: string | null
+          has_listing_photos: boolean | null
           id: string
           is_archived: boolean
           is_available: boolean
@@ -91,6 +92,7 @@ export type Database = {
           deposit_ugx?: number
           description?: string
           distance_from_town?: string | null
+          has_listing_photos?: boolean | null
           id?: string
           is_archived?: boolean
           is_available?: boolean
@@ -116,6 +118,7 @@ export type Database = {
           deposit_ugx?: number
           description?: string
           distance_from_town?: string | null
+          has_listing_photos?: boolean | null
           id?: string
           is_archived?: boolean
           is_available?: boolean
