@@ -1,0 +1,3 @@
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS has_listing_photos boolean GENERATED ALWAYS AS (COALESCE(cardinality(photos), 0) > 0) STORED;
+COMMENT ON COLUMN public.listings.has_listing_photos IS 'Derived from the saved photo array for public availability/photo/newest ordering; no listing data is changed.';
+CREATE INDEX IF NOT EXISTS listings_public_photo_order_idx ON public.listings (is_available DESC, has_listing_photos DESC, posted_at DESC, id DESC) WHERE is_archived = false;

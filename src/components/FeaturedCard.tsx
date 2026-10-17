@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ShieldCheck } from "lucide-react";
+import { MapPin, ShieldCheck } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { addedAgoLabel, formatUGX, isNewlyAdded } from "@/lib/format";
 import { propertyTypeLabel } from "@/lib/constants";
@@ -63,8 +63,12 @@ export function FeaturedCard({ listing }: { listing: Listing }) {
           </span>
           <span className="text-xs font-normal text-muted-foreground">/mo</span>
         </div>
-        <div className="truncate text-[11px] text-muted-foreground">
-          {propertyTypeLabel(listing)} · {listing.location}
+        <div className="flex items-start gap-1 text-sm font-bold text-brand-blue">
+          <MapPin className="mt-0.5 size-3.5 shrink-0" />
+          <span className="min-w-0 break-words">{listing.location}</span>
+        </div>
+        <div className="text-[11px] text-muted-foreground">
+          {propertyTypeLabel(listing)}
         </div>
         {isNew && (
           <div className="truncate text-[10px] font-medium text-brand-blue">
