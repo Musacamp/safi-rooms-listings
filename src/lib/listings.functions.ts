@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { orderPublicListings } from "@/lib/public-listing-order";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
@@ -114,14 +115,10 @@ export const listListings = createServerFn({ method: "GET" })
     const sb = makePublicClient();
     const limit = data.limit ?? 20;
     const offset = data.offset ?? 0;
-    let q = sb
+    let q = orderPublicListings(sb
       .from("listings")
       .select(sel("*"))
-      .eq("is_archived", false)
-      // Available rooms first; taken rooms sink to the bottom, newest-first
-      // within each group. PostgREST applies these as primary/secondary sort.
-      .order("is_available", { ascending: false })
-      .order("posted_at", { ascending: false })
+      .eq("is_archived", false))
       .range(offset, offset + limit - 1);
 
     const pt = data.type ? PROPERTY_TYPE_MAP[data.type] : undefined;
@@ -177,13 +174,11 @@ export const getLocationSuggestions = createServerFn({ method: "GET" }).handler(
 
 export const getFeaturedListings = createServerFn({ method: "GET" }).handler(async () => {
   const sb = makePublicClient();
-  const { data, error } = await sb
+  const { data, error } = await orderPublicListings(sb
     .from("listings")
     .select("*")
     .eq("is_archived", false)
-    .eq("is_featured", true)
-    .order("is_available", { ascending: false })
-    .order("posted_at", { ascending: false })
+    .eq("is_featured", true))
     .limit(6);
   if (error) throw new Error(error.message);
   return resolveListings(sb, data ?? []);
@@ -210,14 +205,12 @@ export const getSimilarListings = createServerFn({ method: "GET" })
     const sb = makePublicClient();
     const { data: base } = await sb.from("listings").select("*").eq("id", data.id).maybeSingle();
     if (!base) return [];
-    const { data: rows } = await sb
+    const { data: rows } = await orderPublicListings(sb
       .from("listings")
       .select("*")
       .eq("is_archived", false)
       .eq("room_type", base.room_type)
-      .neq("id", base.id)
-      .order("is_available", { ascending: false })
-      .order("posted_at", { ascending: false })
+      .neq("id", base.id))
       .limit(4);
     return resolveListings(sb, rows ?? []);
   });

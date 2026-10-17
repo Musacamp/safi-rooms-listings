@@ -11,7 +11,11 @@ import {
   SlidersHorizontal,
   BadgeCheck,
   Sparkles,
+  MessageCircle,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { WhatsAppTextEditor } from "@/components/WhatsAppTextEditor";
+import { buildWhatsAppText } from "@/lib/whatsapp-text";
 import { adminListAvailableListings } from "@/lib/admin-listings.functions";
 import { buildPosterImage, formatPosterDate, type PosterRoom } from "@/lib/poster-card";
 import { formatUGX } from "@/lib/format";
@@ -27,6 +31,14 @@ import { describeQuery, parseSearchQuery } from "@/lib/search-parse";
 import markAsset from "@/assets/safirooms-mark.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/admin/generator")({
+  head: () => ({ meta: [
+    { title: "Room Sharing Generator · SafiRooms Admin" },
+    { name: "description", content: "Prepare room listing images and editable WhatsApp messages from available SafiRooms listings." },
+    { property: "og:title", content: "Room Sharing Generator · SafiRooms Admin" },
+    { property: "og:description", content: "Prepare room listing images and editable WhatsApp messages from available SafiRooms listings." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Generator,
 });
 
@@ -52,11 +64,12 @@ function Generator() {
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [generated, setGenerated] = useState(true);
   const [sharing, setSharing] = useState(false);
+  const [textParts, setTextParts] = useState<string[]>([]);
 
   const parsed = useMemo(() => parseSearchQuery(q), [q]);
   const smart = q.trim().length > 0;
   const effectiveCat: ListingCategoryKey = parsed.type ?? cat;
-  const category = LISTING_CATEGORIES.find((c) => c.key === effectiveCat)!;
+  const category = LISTING_CATEGORIES.find((c) => c.key === effectiveCat) ?? LISTING_CATEGORIES[0];
   const posterTitle = smart ? describeQuery(parsed) : category.title;
 
   const list = useMemo(() => {
@@ -199,15 +212,23 @@ function Generator() {
   const toggleAmenity = (a: string) =>
     setAmenities((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]));
 
+  const generateText = () => {
+    setTextParts(buildWhatsAppText(list, smart && !parsed.type ? "Available rooms" : category.title));
+  };
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-lg font-bold text-foreground">Written Listings Generator</h1>
           <p className="text-xs text-muted-foreground">
             Built only from rooms marked Available on the client portal.
           </p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <Button onClick={generateText} disabled={rooms.isLoading || list.length === 0} className="min-h-11">
+          <MessageCircle /> Generate WhatsApp text
+        </Button>
         <button
           onClick={regenerate}
           disabled={rooms.isFetching}
@@ -220,6 +241,7 @@ function Generator() {
           )}
           Regenerate
         </button>
+        </div>
       </div>
 
       <div className="flex gap-1 overflow-x-auto no-scrollbar">
@@ -356,6 +378,8 @@ function Generator() {
           <Sparkles className="size-4" /> Generate Listings
         </button>
       ) : null}
+
+      {textParts.length > 0 && <WhatsAppTextEditor parts={textParts} onChange={setTextParts} />}
 
       {/* Poster preview */}
       <div className="overflow-hidden rounded-2xl ring-1 ring-border">
