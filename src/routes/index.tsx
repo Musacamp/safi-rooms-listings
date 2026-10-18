@@ -12,7 +12,7 @@ import { getFeaturedListings, getPublicStats, listListings } from "@/lib/listing
 import { logSiteVisitOnce } from "@/lib/track";
 import { ListingCard } from "@/components/ListingCard";
 import { FeaturedCard } from "@/components/FeaturedCard";
-import { FilterBar } from "@/components/FilterBar";
+import { FilterBar, RoomTypeTabs } from "@/components/FilterBar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CONTACT_PHONE_DISPLAY, PRICE_BANDS, TEL_URL, WHATSAPP_URL } from "@/lib/constants";
 import markAsset from "@/assets/safirooms-mark.png.asset.json";
@@ -178,8 +178,8 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-surface pb-24">
-      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
+      <header className="sticky top-0 z-20 h-16 border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto grid h-full max-w-3xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 sm:flex sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <img
@@ -247,6 +247,7 @@ function Home() {
         </section>
 
         <FilterBar />
+        <RoomTypeTabs />
 
         {hydrated && featured.length > 0 && !search.type && !search.q && !search.recent && (
           <section className="mb-3">
@@ -262,7 +263,7 @@ function Home() {
           </section>
         )}
 
-        <section className="px-3">
+        <section id="public-listings" className="scroll-mt-32 px-3 pt-2">
           <div className="mb-1.5 flex items-center justify-between">
             <h2 className="text-[13px] font-semibold text-foreground">
               {search.recent ? "Newly added · " : ""}
