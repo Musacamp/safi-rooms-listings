@@ -1,5 +1,5 @@
 # SafiRooms updates
-- [ ] Add deterministic WhatsApp selling points with negation/sharing guards and verify the requested examples; preserve all other displays and data.
+- [x] Add deterministic WhatsApp selling points with negation/sharing guards; all 50 formatter tests passed, including the five real examples, and preview reports build OK. Other displays and data unchanged.
 - [x] Emphasize public locations across cards, featured and detail displays.
 - [x] Apply server-side availability/photo/newest ordering and verify pagination and filters.
 - [x] Add editable WhatsApp text generation, copy and share; preserve image generator.
