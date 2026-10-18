@@ -1,8 +1,65 @@
 import { describe, expect, test } from "vitest";
-import { buildWhatsAppText, whatsappTextUrl } from "./whatsapp-text";
+import { buildWhatsAppText, detectSellingPoints, whatsappTextUrl } from "./whatsapp-text";
 
 const room = { id: "room-id", location: "Pamba", rent_ugx: 70000, deposit_ugx: 140000, amenities: ["water", "electricity"] };
 const date = new Date("2026-10-17T04:16:00Z");
+
+describe("deterministic selling points", () => {
+  test.each([
+    ["Single Self-contained water bill inclusive", "Water bill paid by landlord on rent money", ["water", "electricity", "parking", "fence", "security"], ["water bill inclusive", "bathroom inside", "fenced"]],
+    ["Classy double Self-contained", "Inside kitchen\nOwn yaka meter\nShared water bill", ["kitchen", "fence"], ["bathroom inside", "inside kitchen", "fenced"]],
+    ["Single ordinary", "", ["water", "electricity"], []],
+    ["Double Self-contained own bathroom", "Own yaka meter", ["kitchen", "fence"], ["bathroom inside", "kitchen", "fenced"]],
+    ["Single Self-contained bills inclusive", "Water and power bills covered on rent", ["fence"], ["bills inclusive", "bathroom inside", "fenced"]],
+  ])("detects the real listing: %s", (title, description, amenities, expected) => {
+    expect(detectSellingPoints({ title: String(title), description: String(description), amenities: amenities as string[] })).toEqual(expected);
+  });
+  test("appends only fixed lowercase claims on the same numbered room line", () => {
+    const [text] = buildWhatsAppText([{ ...room, location: "Oderai", description: "Fenced, with bathroom and own kitchen" }], "Rooms", date);
+    expect(text?.split("\n").filter((line) => /^\d+\./.test(line))).toEqual([
+      "1. 70,000UGX  *ODERAI* - bathroom inside, inside kitchen, fenced",
+    ]);
+  });
+  test("omits the dash when no features are detected", () => {
+    const [text] = buildWhatsAppText([{ ...room, title: "Single ordinary", description: "" }], "Rooms", date);
+    expect(text?.split("\n").find((line) => /^1\./.test(line))).toBe("1. 70,000UGX  *PAMBA*");
+  });
+  test.each(["Power shared 15k per month", "Shared water bill", "Sharing power meter", "Water bill is shared"]) ("suppresses inclusive bills and own meters when utilities are shared: %s", (description) => {
+    expect(detectSellingPoints({ title: "Bills inclusive own yaka meter", description, amenities: [] })).toEqual([]);
+  });
+  test.each([
+    ["No fence", ["fence"]], ["Not fenced", ["fence"]], ["No own bathroom", []],
+    ["Not self-contained", []], ["No inside kitchen", ["kitchen"]],
+    ["Not bills inclusive", []], ["No water bill inclusive", []], ["No own meter", []],
+  ])("rejects explicitly negated claims: %s", (description, amenities) => {
+    expect(detectSellingPoints({ description, amenities })).toEqual([]);
+  });
+  test.each(["bill inclusive", "all bills included", "bills included", "bills covered", "power bills covered"]) ("detects general inclusive bills: %s", (description) => {
+    expect(detectSellingPoints({ description, amenities: [] })).toEqual(["bills inclusive"]);
+  });
+  test.each(["self contained", "selfcontained", "own bathroom", "bathroom inside", "inside bathroom", "with bathroom", "ensuite"]) ("detects inside bathrooms: %s", (title) => {
+    expect(detectSellingPoints({ title, amenities: [] })).toEqual(["bathroom inside"]);
+  });
+  test("normalizes case and whitespace and prioritizes inside over generic kitchen", () => {
+    expect(detectSellingPoints({ description: "  KITCHEN   INSIDE  ", amenities: [" Kitchen "] })).toEqual(["inside kitchen"]);
+  });
+  test.each(["enclosed", "compound wall", "fence"]) ("detects fenced synonyms: %s", (description) => {
+    expect(detectSellingPoints({ description, amenities: [] })).toEqual(["fenced"]);
+  });
+  test.each(["own yaka", "own meter", "own water meter", "own power meter"]) ("detects own meters: %s", (description) => {
+    expect(detectSellingPoints({ description, amenities: [] })).toEqual(["own meter"]);
+  });
+  test.each(["Own water meter\nOwn yaka meter", "Own water and power meters"]) ("detects both owned meters: %s", (description) => {
+    expect(detectSellingPoints({ description, amenities: [] })).toEqual(["own water and power meters"]);
+  });
+  test("limits features to three in priority order without duplicates", () => {
+    expect(detectSellingPoints({ title: "Self-contained own bathroom bills inclusive", description: "Own kitchen fenced own meter", amenities: ["fence", "kitchen"] })).toEqual(["bills inclusive", "bathroom inside", "inside kitchen"]);
+  });
+  test("never copies arbitrary descriptions or private contacts into room lines", () => {
+    const [text] = buildWhatsAppText([{ ...room, description: "Fenced landlord +256000123456 deposit 140000 https://private.example" }], "Rooms", date);
+    expect(text?.split("\n").find((line) => /^1\./.test(line))).toBe("1. 70,000UGX  *PAMBA* - fenced");
+  });
+});
 
 describe("WhatsApp room text", () => {
   test("formats numbered rooms as priceUGX, two spaces and bold uppercase location on one line", () => {
