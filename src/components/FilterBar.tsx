@@ -1,8 +1,9 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Search, SlidersHorizontal, X, Sparkles, BadgeCheck } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AMENITY_LABEL, AMENITY_OPTIONS, PRICE_BANDS, PROPERTY_TYPES } from "@/lib/constants";
 import { LocationSearch } from "./LocationSearch";
+import { Button } from "./ui/button";
 
 type HomeSearch = {
   type?: string;
@@ -26,7 +27,6 @@ export function FilterBar() {
   const locations = search.loc ? search.loc.split(",").filter(Boolean) : [];
   const amenities = search.am ? search.am.split(",").filter(Boolean) : [];
 
-  const setType = (type: string | undefined) => patch({ type, recent: undefined });
   const toggleAmenity = (a: string) => {
     const next = amenities.includes(a) ? amenities.filter((x) => x !== a) : [...amenities, a];
     patch({ am: next.length ? next.join(",") : undefined });
@@ -75,22 +75,6 @@ export function FilterBar() {
           value={locations}
           onChange={(next) => patch({ loc: next.length ? next.join(",") : undefined })}
         />
-      </div>
-
-      <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
-        <Chip active={!search.type && !search.recent} onClick={() => setType(undefined)}>
-          All
-        </Chip>
-        <Chip active={!!search.recent} onClick={() => patch({ recent: true, type: undefined })}>
-          <span className="inline-flex items-center gap-1">
-            <Sparkles className="size-3" /> New
-          </span>
-        </Chip>
-        {PROPERTY_TYPES.map((t) => (
-          <Chip key={t.key} active={search.type === t.key} onClick={() => setType(t.key)}>
-            {t.chip}
-          </Chip>
-        ))}
       </div>
 
       {activeCount > 0 && (
@@ -204,6 +188,43 @@ function Pill({
   );
 }
 
+export function RoomTypeTabs() {
+  const nav = useNavigate({ from: "/" });
+  const search = useSearch({ from: "/" }) as HomeSearch;
+  const row = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = row.current;
+    const active = container?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!container || !active) return;
+    container.scrollTo({ left: active.offsetLeft - container.offsetLeft - (container.clientWidth - active.offsetWidth) / 2, behavior: "instant" });
+  }, [search.type, search.recent]);
+
+  const select = async (type: string | undefined, recent?: boolean) => {
+    await nav({
+      search: (prev: Record<string, unknown>) => ({ ...prev, type, recent }) as never,
+      resetScroll: false,
+    });
+    requestAnimationFrame(() => {
+      document.getElementById("public-listings")?.scrollIntoView({ block: "start", behavior: "instant" });
+    });
+  };
+
+  return (
+    <nav aria-label="Room types" className="sticky top-16 z-20 border-b border-border bg-background/95 backdrop-blur">
+      <div ref={row} className="relative flex h-14 items-center gap-1.5 overflow-x-auto px-3 no-scrollbar">
+        <Chip active={!search.type && !search.recent} onClick={() => select(undefined)}>All</Chip>
+        <Chip active={!!search.recent} onClick={() => select(undefined, true)}>
+          <Sparkles className="size-3.5 shrink-0" /> New
+        </Chip>
+        {PROPERTY_TYPES.map((type) => (
+          <Chip key={type.key} active={search.type === type.key} onClick={() => select(type.key)}>{type.chip}</Chip>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 function Chip({
   active,
   onClick,
@@ -214,15 +235,14 @@ function Chip({
   children: React.ReactNode;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant={active ? "default" : "outline"}
+      aria-pressed={!!active}
       onClick={onClick}
-      className={
-        "shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-medium transition-colors " +
-        (active ? "bg-brand-blue text-white" : "bg-card text-muted-foreground ring-1 ring-border")
-      }
+      className="h-10 shrink-0 whitespace-nowrap rounded-full px-3 text-sm font-semibold"
     >
       {children}
-    </button>
+    </Button>
   );
 }

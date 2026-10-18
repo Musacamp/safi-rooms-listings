@@ -1,5 +1,4 @@
-import { AMENITY_LABEL, CONTACT_PHONE_DISPLAY, SITE_URL } from "./constants";
-import { formatUGX } from "./format";
+import { CONTACT_PHONE_DISPLAY, SITE_URL } from "./constants";
 
 export type WhatsAppRoom = {
   id: string;
@@ -13,28 +12,20 @@ const clean = (value: string) => value.replace(/[\r\n*_~`]/g, " ").replace(/\s+/
 
 export function buildWhatsAppText(rooms: WhatsAppRoom[], heading: string, date = new Date()): string[] {
   const dateLabel = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Kampala" });
-  const blocks = rooms.map((room, index) => [
-    `${index + 1}. *${clean(room.location)}*`,
-    `${formatUGX(room.rent_ugx)}/month`,
-    ...(room.deposit_ugx && room.deposit_ugx > 0 ? [`Deposit: ${formatUGX(room.deposit_ugx)}`] : []),
-    ...(room.amenities?.length ? [room.amenities.slice(0, 4).map((a) => clean(AMENITY_LABEL[a] ?? a)).join(" · ")] : []),
-    `${SITE_URL}/listing/${encodeURIComponent(room.id)}`,
-  ].join("\n"));
+  const blocks = rooms.map((room, index) =>
+    `${index + 1}. ${room.rent_ugx.toLocaleString("en-UG")}UGX  *${clean(room.location).toUpperCase()}*`
+  );
   const parts: string[][] = [];
-  // Eight rooms per part; also split unusually long blocks sooner.
-  for (const block of blocks) {
-    const current = parts[parts.length - 1];
-    if (!current || current.length >= 8 || current.join("\n\n").length + block.length > 6000) parts.push([block]);
-    else current.push(block);
+  for (let offset = 0; offset < blocks.length; offset += 40) {
+    parts.push(blocks.slice(offset, offset + 40));
   }
   return parts.map((part, index) => [
-    `*SafiRooms · ${clean(heading)}*`,
-    dateLabel,
+    `*SafiRooms · ${clean(heading)} · ${dateLabel}*`,
     ...(parts.length > 1 ? [`Part ${index + 1}/${parts.length}`] : []),
     "",
-    part.join("\n\n"),
+    part.join("\n"),
     "",
-    `Book a viewing: WhatsApp ${CONTACT_PHONE_DISPLAY}`,
+    `Book a viewing: WhatsApp ${CONTACT_PHONE_DISPLAY} · ${SITE_URL}`,
   ].join("\n"));
 }
 
