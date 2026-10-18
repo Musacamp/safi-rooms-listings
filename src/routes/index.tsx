@@ -178,8 +178,8 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-surface pb-24">
-      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto grid h-16 max-w-3xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 sm:flex sm:justify-between">
+      <header className="sticky top-0 z-20 h-16 border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto grid h-full max-w-3xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 sm:flex sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <img
