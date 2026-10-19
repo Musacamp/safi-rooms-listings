@@ -1,7 +1,8 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, ListPlus, LogOut, Home, Sparkles, Wallet } from "lucide-react";
+import { LayoutDashboard, ListPlus, LogOut, Home, Sparkles, Wallet, MoreVertical, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/browser";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { EdgeSwipeNav } from "@/components/EdgeSwipeNav";
 
 export const Route = createFileRoute("/_authenticated/admin")({
