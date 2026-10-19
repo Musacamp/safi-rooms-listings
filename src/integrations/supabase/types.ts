@@ -79,6 +79,8 @@ export type Database = {
           rent_ugx: number
           room_number: string | null
           room_type: Database["public"]["Enums"]["room_type"]
+          taken_at: string | null
+          taken_at_estimated: boolean
           title: string
           updated_at: string
           vacancies: number
@@ -105,6 +107,8 @@ export type Database = {
           rent_ugx: number
           room_number?: string | null
           room_type: Database["public"]["Enums"]["room_type"]
+          taken_at?: string | null
+          taken_at_estimated?: boolean
           title: string
           updated_at?: string
           vacancies?: number
@@ -131,6 +135,8 @@ export type Database = {
           rent_ugx?: number
           room_number?: string | null
           room_type?: Database["public"]["Enums"]["room_type"]
+          taken_at?: string | null
+          taken_at_estimated?: boolean
           title?: string
           updated_at?: string
           vacancies?: number
@@ -290,7 +296,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_market_insights: { Args: { p_days?: number }; Returns: Json }
     }
     Enums: {
       event_kind: "view" | "call" | "whatsapp"

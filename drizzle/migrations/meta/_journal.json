@@ -8,6 +8,13 @@
       "when": 1792210687609,
       "tag": "0000_add_listing_photo_sort_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792379647440,
+      "tag": "0001_listings_taken_at_and_market_insights",
+      "breakpoints": true
     }
   ]
 }
