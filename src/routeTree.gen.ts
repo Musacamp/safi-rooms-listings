@@ -16,6 +16,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as ListingIdRouteImport } from './routes/listing.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminGeneratorRouteImport } from './routes/_authenticated/admin.generator'
+import { Route as AuthenticatedAdminInsightsRouteImport } from './routes/_authenticated/admin.insights'
 import { Route as AuthenticatedAdminListingsRouteImport } from './routes/_authenticated/admin.listings'
 import { Route as AuthenticatedAdminNewRouteImport } from './routes/_authenticated/admin.new'
 import { Route as AuthenticatedAdminRevenueRouteImport } from './routes/_authenticated/admin.revenue'
@@ -56,6 +57,12 @@ const AuthenticatedAdminGeneratorRoute =
     path: '/generator',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminInsightsRoute =
+  AuthenticatedAdminInsightsRouteImport.update({
+    id: '/insights',
+    path: '/insights',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminListingsRoute =
   AuthenticatedAdminListingsRouteImport.update({
     id: '/listings',
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/listing/$id': typeof ListingIdRoute
   '/admin/generator': typeof AuthenticatedAdminGeneratorRoute
+  '/admin/insights': typeof AuthenticatedAdminInsightsRoute
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/admin/new': typeof AuthenticatedAdminNewRoute
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
@@ -97,6 +105,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/listing/$id': typeof ListingIdRoute
   '/admin/generator': typeof AuthenticatedAdminGeneratorRoute
+  '/admin/insights': typeof AuthenticatedAdminInsightsRoute
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/admin/new': typeof AuthenticatedAdminNewRoute
   '/admin/revenue': typeof AuthenticatedAdminRevenueRoute
@@ -111,6 +120,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/listing/$id': typeof ListingIdRoute
   '/_authenticated/admin/generator': typeof AuthenticatedAdminGeneratorRoute
+  '/_authenticated/admin/insights': typeof AuthenticatedAdminInsightsRoute
   '/_authenticated/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/_authenticated/admin/new': typeof AuthenticatedAdminNewRoute
   '/_authenticated/admin/revenue': typeof AuthenticatedAdminRevenueRoute
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/listing/$id'
     | '/admin/generator'
+    | '/admin/insights'
     | '/admin/listings'
     | '/admin/new'
     | '/admin/revenue'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/listing/$id'
     | '/admin/generator'
+    | '/admin/insights'
     | '/admin/listings'
     | '/admin/new'
     | '/admin/revenue'
@@ -149,6 +161,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/listing/$id'
     | '/_authenticated/admin/generator'
+    | '/_authenticated/admin/insights'
     | '/_authenticated/admin/listings'
     | '/_authenticated/admin/new'
     | '/_authenticated/admin/revenue'
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminGeneratorRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/insights': {
+      id: '/_authenticated/admin/insights'
+      path: '/insights'
+      fullPath: '/admin/insights'
+      preLoaderRoute: typeof AuthenticatedAdminInsightsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/listings': {
       id: '/_authenticated/admin/listings'
       path: '/listings'
@@ -247,6 +267,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminGeneratorRoute: typeof AuthenticatedAdminGeneratorRoute
+  AuthenticatedAdminInsightsRoute: typeof AuthenticatedAdminInsightsRoute
   AuthenticatedAdminListingsRoute: typeof AuthenticatedAdminListingsRoute
   AuthenticatedAdminNewRoute: typeof AuthenticatedAdminNewRoute
   AuthenticatedAdminRevenueRoute: typeof AuthenticatedAdminRevenueRoute
@@ -256,6 +277,7 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminGeneratorRoute: AuthenticatedAdminGeneratorRoute,
+  AuthenticatedAdminInsightsRoute: AuthenticatedAdminInsightsRoute,
   AuthenticatedAdminListingsRoute: AuthenticatedAdminListingsRoute,
   AuthenticatedAdminNewRoute: AuthenticatedAdminNewRoute,
   AuthenticatedAdminRevenueRoute: AuthenticatedAdminRevenueRoute,
