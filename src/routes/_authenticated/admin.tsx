@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 import { LayoutDashboard, ListPlus, LogOut, Home, Sparkles, Wallet, MoreVertical, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/browser";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EdgeSwipeNav } from "@/components/EdgeSwipeNav";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -44,6 +44,7 @@ function AdminLayout() {
             >
               <LogOut className="size-3.5" /> Sign out
             </button>
+            <MoreMenu />
           </div>
         </div>
         <nav className="mx-auto flex max-w-5xl gap-1 px-4 pb-2">
@@ -88,5 +89,51 @@ function NavLink({ to, icon, label }: { to: string; icon: React.ReactNode; label
       {icon}
       {label}
     </Link>
+  );
+}
+
+function MoreMenu() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-label="More"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="grid size-11 place-items-center rounded-lg bg-secondary text-secondary-foreground ring-1 ring-border"
+      >
+        <MoreVertical className="size-4" />
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 top-12 z-30 min-w-48 rounded-lg bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-border">
+          <Link
+            to="/admin/insights"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-medium hover:bg-secondary"
+          >
+            <BarChart3 className="size-4" /> Market Insights
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import type { PostData } from "./insight-templates";
 
 export type InsightRoom = {
   id: string;
@@ -39,4 +40,22 @@ export const getMarketInsights = createServerFn({ method: "GET" })
     });
     if (error) throw new Error(error.message);
     return result as MarketInsights;
+  });
+
+export const getPostData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ start: z.string().datetime(), end: z.string().datetime() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: admin } = await context.supabase
+      .from("admins")
+      .select("user_id")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!admin) throw new Error("Forbidden: admin access required");
+    const { data: result, error } = await (context.supabase as any).rpc("admin_post_data", {
+      p_start: data.start,
+      p_end: data.end,
+    });
+    if (error) throw new Error(error.message);
+    return result as PostData;
   });

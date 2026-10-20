@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, MapPin, ImageOff, Pencil } from "lucide-react";
 import { getMarketInsights, type InsightRoom, type MarketInsights } from "@/lib/insights.functions";
 import { buildQuickInsights, categoryLabel } from "@/lib/insights-utils";
 import { formatUGX } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/browser";
+import { WhatsAppPosts } from "@/components/WhatsAppPosts";
 
 export const Route = createFileRoute("/_authenticated/admin/insights")({
   head: () => ({
@@ -53,6 +54,8 @@ function AdminInsights() {
         </div>
       </div>
 
+      <WhatsAppPosts />
+
       {isLoading && <Skeleton />}
       {isError && <Empty text="Couldn't load insights right now. Please try again." />}
       {data && <InsightsBody data={data} />}
@@ -87,13 +90,16 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function RoomRow({ room }: { room: InsightRoom }) {
   const [thumb, setThumb] = useState<string | null>(null);
-  useState(() => {
-    if (room.photo) {
-      supabase.storage.from("listing-photos").createSignedUrl(room.photo, 300).then(({ data }) => {
-        if (data?.signedUrl) setThumb(data.signedUrl);
-      });
-    }
-  });
+  useEffect(() => {
+    if (!room.photo) return;
+    let active = true;
+    supabase.storage.from("listing-photos").createSignedUrl(room.photo, 300).then(({ data }) => {
+      if (active && data?.signedUrl) setThumb(data.signedUrl);
+    });
+    return () => {
+      active = false;
+    };
+  }, [room.photo]);
   return (
     <div className="flex min-h-14 items-center gap-3 rounded-lg bg-background p-2 ring-1 ring-border">
       {thumb ? (

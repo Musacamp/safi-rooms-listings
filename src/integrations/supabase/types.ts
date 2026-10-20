@@ -241,6 +241,30 @@ export type Database = {
         }
         Relationships: []
       }
+      search_events: {
+        Row: {
+          created_at: string
+          id: string
+          location: string | null
+          room_type: string | null
+          term: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          room_type?: string | null
+          term?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          room_type?: string | null
+          term?: string | null
+        }
+        Relationships: []
+      }
       site_visits: {
         Row: {
           created_at: string
@@ -297,6 +321,10 @@ export type Database = {
     }
     Functions: {
       admin_market_insights: { Args: { p_days?: number }; Returns: Json }
+      admin_post_data: {
+        Args: { p_end: string; p_start: string }
+        Returns: Json
+      }
     }
     Enums: {
       event_kind: "view" | "call" | "whatsapp"

@@ -17,6 +17,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { CONTACT_PHONE_DISPLAY, PRICE_BANDS, TEL_URL, WHATSAPP_URL } from "@/lib/constants";
 import markAsset from "@/assets/safirooms-mark.png.asset.json";
 import { EdgeSwipeNav } from "@/components/EdgeSwipeNav";
+import { logSearch } from "@/lib/search-log";
 
 const searchSchema = z.object({
   type: z.string().optional(),
@@ -161,6 +162,10 @@ function Home() {
   useEffect(() => {
     logSiteVisitOnce();
   }, []);
+
+  useEffect(() => {
+    logSearch({ term: search.q, location: search.loc, room_type: search.type });
+  }, [search.q, search.loc, search.type]);
 
   useEffect(() => {
     const el = sentinel.current;
