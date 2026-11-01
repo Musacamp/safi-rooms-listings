@@ -64,7 +64,8 @@ function Generator() {
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [generated, setGenerated] = useState(true);
   const [sharing, setSharing] = useState(false);
-  const [textParts, setTextParts] = useState<string[]>([]);
+  const [textEnabled, setTextEnabled] = useState(false);
+  const [textEdits, setTextEdits] = useState<{ source: string; parts: string[] } | null>(null);
 
   const parsed = useMemo(() => parseSearchQuery(q), [q]);
   const smart = q.trim().length > 0;
@@ -212,8 +213,17 @@ function Generator() {
   const toggleAmenity = (a: string) =>
     setAmenities((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]));
 
+  const generatedText = useMemo(
+    () => buildWhatsAppText(list, smart && !parsed.type ? "Available rooms" : category.title),
+    [list, smart, parsed.type, category.title],
+  );
+  // Edits belong to the exact current filtered output; never show a previous category's message.
+  const textSource = JSON.stringify([effectiveCat, q, location, minRent, maxRent, maxDeposit, amenities, addedDays, verifiedOnly, sort, generatedText]);
+  const textParts = textEdits?.source === textSource ? textEdits.parts : generatedText;
+  const setTextParts = (parts: string[]) => setTextEdits({ source: textSource, parts });
   const generateText = () => {
-    setTextParts(buildWhatsAppText(list, smart && !parsed.type ? "Available rooms" : category.title));
+    setTextEnabled(true);
+    setTextEdits(null);
   };
 
   return (
@@ -379,7 +389,7 @@ function Generator() {
         </button>
       ) : null}
 
-      {textParts.length > 0 && <WhatsAppTextEditor parts={textParts} onChange={setTextParts} />}
+      {textEnabled && textParts.length > 0 && <WhatsAppTextEditor parts={textParts} onChange={setTextParts} />}
 
       {/* Poster preview */}
       <div className="overflow-hidden rounded-2xl ring-1 ring-border">

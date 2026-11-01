@@ -1,6 +1,6 @@
 import { CONTACT_PHONE_DISPLAY, SITE_URL, propertyTypeLabel } from "./constants";
 import { normalizeLocation } from "./insights-utils";
-import { detectRoomCategory, detectSellingPoints, type RoomCategory, type WhatsAppRoom } from "./whatsapp-text";
+import { detectRoomCategory, detectInsightSellingPoints as detectSellingPoints, type RoomCategory, type WhatsAppRoom } from "./whatsapp-text";
 
 export type PostRoom = WhatsAppRoom & { room_type: string; posted_at: string; score: number };
 
