@@ -6,11 +6,13 @@ import { AMENITY_LABEL, TEL_URL, WHATSAPP_URL, propertyTypeLabel } from "@/lib/c
 import { useHydrated } from "@/hooks/use-hydrated";
 import { ShareListingButton } from "@/components/ShareListingButton";
 import { track } from "@/lib/track";
+import { useDailyCover } from "@/hooks/use-daily-cover";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
 export function ListingCard({ listing }: { listing: Listing }) {
-  const cover = listing.photos?.[0];
+  const { index: coverIndex } = useDailyCover(listing.photos);
+  const cover = listing.photos?.[coverIndex];
   const amenities = listing.amenities ?? [];
   const shown = amenities.slice(0, 3);
   const extra = amenities.length - shown.length;
@@ -51,7 +53,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           )}
           {photoCount > 1 && (
             <span className="absolute bottom-2 right-2 rounded-md bg-black/60 px-2 py-0.5 text-xs font-semibold text-white">
-              1/{photoCount}
+              {coverIndex + 1}/{photoCount}
             </span>
           )}
         </div>

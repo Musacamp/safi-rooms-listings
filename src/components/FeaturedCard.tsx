@@ -4,11 +4,13 @@ import type { Database } from "@/integrations/supabase/types";
 import { addedAgoLabel, formatUGX, isNewlyAdded } from "@/lib/format";
 import { propertyTypeLabel } from "@/lib/constants";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { useDailyCover } from "@/hooks/use-daily-cover";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
 export function FeaturedCard({ listing }: { listing: Listing }) {
-  const cover = listing.photos?.[0];
+  const { index: coverIndex } = useDailyCover(listing.photos);
+  const cover = listing.photos?.[coverIndex];
   const occupied = !listing.is_available;
   const hydrated = useHydrated();
   const isNew = hydrated && isNewlyAdded(listing.posted_at);

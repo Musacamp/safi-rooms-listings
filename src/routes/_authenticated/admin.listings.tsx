@@ -23,6 +23,7 @@ import {
 import { supabase } from "@/integrations/supabase/browser";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 import type { Database } from "@/integrations/supabase/types";
+import { useDailyCover } from "@/hooks/use-daily-cover";
 
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
@@ -50,6 +51,14 @@ async function ensureSignedUrls(paths: string[]): Promise<Record<string, string>
 }
 
 export const Route = createFileRoute("/_authenticated/admin/listings")({
+  head: () => ({ meta: [
+    { title: "Manage Listings · SafiRooms Admin" },
+    { name: "description", content: "Manage SafiRooms listings, photos and availability." },
+    { property: "og:title", content: "Manage Listings · SafiRooms Admin" },
+    { property: "og:description", content: "Manage SafiRooms listings, photos and availability." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminListings,
 });
 
@@ -235,7 +244,9 @@ function AdminListingRow({
   const [lightbox, setLightbox] = useState(false);
   const [idx, setIdx] = useState(0);
   const resolved = (l.photos ?? []).map((p) => urls[p]).filter(Boolean);
-  const cover = resolved[0];
+  const { index: coverIndex } = useDailyCover(l.photos);
+  const coverPath = l.photos?.[coverIndex];
+  const cover = coverPath ? urls[coverPath] : undefined;
 
   return (
     <div className="flex flex-col gap-3 border-b border-border p-3 last:border-none sm:flex-row sm:items-center sm:justify-between">
@@ -246,7 +257,7 @@ function AdminListingRow({
           aria-label={resolved.length ? `View photos of ${l.title}` : "No photos"}
           onClick={() => {
             if (!resolved.length) return;
-            setIdx(0);
+            setIdx(cover ? resolved.indexOf(cover) : 0);
             setLightbox(true);
           }}
           className={
