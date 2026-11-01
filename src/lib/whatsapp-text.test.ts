@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { buildWhatsAppText, detectRoomCategory, detectSellingPoints, whatsappTextUrl } from "./whatsapp-text";
+import { buildWhatsAppText, detectRoomCategory, detectInsightSellingPoints as detectSellingPoints, whatsappTextUrl } from "./whatsapp-text";
 
 const room = { id: "room-id", location: "Pamba", rent_ugx: 70000, deposit_ugx: 140000, amenities: ["water", "electricity"] };
 const date = new Date("2026-10-17T04:16:00Z");
@@ -144,7 +144,7 @@ describe("WhatsApp room text", () => {
       date,
     );
     expect(text?.split("\n").filter((line) => /^\d+\./.test(line))).toEqual([
-      "1. 70,000UGX  *ODERAI* - inside kitchen, fenced",
+      "1. 70,000UGX  *ODERAI* - kitchen, fenced compound",
     ]);
   });
   test("omits the dash when no features are detected", () => {
@@ -184,7 +184,7 @@ describe("WhatsApp room text", () => {
   });
   test("never copies arbitrary descriptions or private contacts into room lines", () => {
     const [text] = buildWhatsAppText([{ ...room, title: "Single", description: "Fenced landlord +256000123456 deposit 140000 https://private.example" }], "Rooms", date);
-    expect(text?.split("\n").find((line) => /^1\./.test(line))).toBe("1. 70,000UGX  *PAMBA* - fenced");
+    expect(text?.split("\n").find((line) => /^1\./.test(line))).toBe("1. 70,000UGX  *PAMBA* - fenced compound");
   });
   test("URL-encodes edited text for WhatsApp sharing", () => {
     const text = "*Pamba*\nUGX 70,000 & viewing?";

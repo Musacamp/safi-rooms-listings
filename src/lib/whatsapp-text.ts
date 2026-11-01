@@ -116,7 +116,7 @@ const RANKING: Record<RoomCategory, FeatureLabel[]> = {
 };
 
 /** Up to 2 lowercase selling points for the WhatsApp line; never 'bathroom inside'. */
-export function detectSellingPoints(
+export function detectInsightSellingPoints(
   listing: Pick<WhatsAppRoom, "title" | "description" | "amenities" | "room_type" | "is_self_contained" | "distance_from_town">,
 ): string[] {
   const category = detectRoomCategory(listing);
@@ -133,6 +133,49 @@ export function detectSellingPoints(
     picked.push("not fenced");
   }
   return picked.slice(0, 2);
+}
+
+/** Ranked, evidence-only points for the room-list generator (not insight posts). */
+export function detectSellingPoints(
+  listing: Partial<Pick<WhatsAppRoom, "title" | "description" | "amenities" | "room_type" | "is_self_contained" | "distance_from_town">>,
+): string[] {
+  const text = [listing.title, listing.description, ...(listing.amenities ?? [])]
+    .filter(Boolean).join(". ").toLowerCase().replace(/[-–—_]/g, " ").replace(/\s+/g, " ");
+  const negated = (pattern: string) => new RegExp(`\\b(?:no|not|without)\\s+(?:\\w+\\s+){0,3}(?:${pattern})\\b`).test(text);
+  const has = (pattern: string) => new RegExp(`\\b(?:${pattern})\\b`).test(text) && !negated(pattern);
+  const shared = /\b(?:shared|sharing)\s+(?:\w+\s+){0,4}(?:water|power|electricity|yaka|bills?|meters?)\b|\b(?:water|power|electricity|yaka|bills?|meters?)\s+(?:\w+\s+){0,4}(?:shared|sharing)\b/.test(text);
+  const fenced = has("fence|fenced(?: compound)?|enclosed compound|compound wall");
+  const bothMeters = !shared && !negated("(?:own )?(?:water|power|electricity|yaka) meters?") && (
+    (has("own (?:yaka|power|electricity) meter") && has("own water meter")) ||
+    has("own (?:yaka|power|electricity) (?:and|&) (?:own )?water meters?|own water (?:and|&) (?:own )?(?:yaka|power|electricity) meters?")
+  );
+  // Generic all-bills language covers both utilities; water-only/power-only never does.
+  const generalBills = text.replace(/\b(?:water|power|electricity|yaka) bills? (?:inclusive|included|covered)\b/g, "");
+  const billPattern = "(?:all )?bills? (?:inclusive|included(?: in rent)?|covered)|rent includes all bills";
+  const bothBills = !shared && !negated("bills?|(?:water|power|electricity|yaka) bills?") && (
+    new RegExp(`\\b(?:${billPattern})\\b`).test(generalBills) ||
+    has("(?:water (?:and|&) (?:power|electricity|yaka)|(?:power|electricity|yaka) (?:and|&) water)(?: bills?)? (?:are )?(?:inclusive|included(?: in rent)?|covered)|rent includes water and (?:power|electricity|yaka)")
+  );
+  const category = detectRoomCategory(listing);
+  const apartment = category === "two_bedroom" || listing.room_type === "apartment" || /\bapartments?\b/.test(text);
+  const selfContained = category.endsWith("self_contained") || listing.is_self_contained === true || /\bself contained\b/.test(text);
+  const ranked: [string, boolean][] = apartment ? [
+    ["two washrooms", has("(?:2|two) (?:washrooms?|bathrooms?|toilets?)")],
+    ["few neighbors", has("few neighbou?rs")],
+    ["gate", has("gate|gated")],
+  ] : selfContained ? [
+    ["kitchen inside", has("kitchen inside|inside kitchen|indoor kitchen")],
+    ["bills included", bothBills],
+    ["own yaka and water meters", bothMeters],
+    ["fenced compound", fenced],
+  ] : [
+    ["beds included", has("beds? (?:are )?(?:included in rent|included|inclusive)|rent includes beds?|beds? on rent")],
+    ["kitchen", has("kitchen")],
+    ["own washrooms outside", has("own (?:washrooms?|bathrooms?|toilets?) outside|outside own (?:washrooms?|bathrooms?|toilets?)|own outside (?:washrooms?|bathrooms?|toilets?)")],
+    ["fenced compound", fenced],
+    ["own yaka and water meters", bothMeters],
+  ];
+  return ranked.filter(([, present]) => present).slice(0, 2).map(([label]) => label);
 }
 
 export function buildWhatsAppText(rooms: WhatsAppRoom[], heading: string, date = new Date()): string[] {

@@ -8,6 +8,8 @@ import {
 } from "@/lib/share-templates";
 import { formatUGX } from "@/lib/format";
 import { ROOM_TYPE_LABEL, SITE_URL } from "@/lib/constants";
+import { useDailyCover } from "@/hooks/use-daily-cover";
+import { coverFirstPhotos } from "@/lib/cover-photo";
 
 /** Canonical public URL of a listing, used for the QR code / caption link. */
 function listingUrl(id: string) {
@@ -25,6 +27,7 @@ export function ShareListingButton({
   iconOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const { index: coverIndex } = useDailyCover(listing.photos);
   const url = listingUrl(listing.id);
 
   const caption =
@@ -35,7 +38,9 @@ export function ShareListingButton({
     (listing.description ? `${listing.description.slice(0, 300)}\n\n` : "") +
     `View on SafiRooms: ${url}`;
 
-  const render = (key: ShareTemplateKey) => renderListingShare(key, listing, url);
+  const render = (key: ShareTemplateKey) => renderListingShare(key, {
+    ...listing, photos: coverFirstPhotos(listing.photos, coverIndex),
+  }, url);
 
   return (
     <>

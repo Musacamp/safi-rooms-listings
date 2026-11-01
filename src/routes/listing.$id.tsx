@@ -35,6 +35,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ShareListingButton } from "@/components/ShareListingButton";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { EdgeSwipeNav } from "@/components/EdgeSwipeNav";
+import { useDailyCover } from "@/hooks/use-daily-cover";
 
 
 const listingOpts = (id: string) =>
@@ -113,7 +114,12 @@ function ListingPage() {
   const { id } = Route.useParams();
   const { data: listing } = useSuspenseQuery(listingOpts(id));
   const { data: similar } = useQuery(similarOpts(id));
-  const [photoIdx, setPhotoIdx] = useState(0);
+  const { index: coverIndex, day } = useDailyCover(listing?.photos);
+  const [photoSelection, setPhotoSelection] = useState<{ id: string; day: number; index: number } | null>(null);
+  const photoIdx = photoSelection?.id === id && photoSelection.day === day ? photoSelection.index : coverIndex;
+  const setPhotoIdx = (next: number | ((index: number) => number)) => {
+    setPhotoSelection({ id, day, index: typeof next === "function" ? next(photoIdx) : next });
+  };
   const [viewer, setViewer] = useState(false);
 
   useEffect(() => {
