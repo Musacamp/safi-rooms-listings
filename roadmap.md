@@ -1,7 +1,7 @@
 # SafiRooms updates
-- [ ] Update WhatsApp selling-point ranking without changing insights or image generators.
-- [ ] Refresh generated editable WhatsApp text automatically with category/filter changes.
-- [ ] Rotate displayed covers daily without changing stored photos; verify tests and displays.
+- [x] Update WhatsApp selling-point ranking without changing insights or image generators; 103 tests pass and preview build OK.
+- [x] Refresh generated editable WhatsApp text automatically with category/filter changes; signed-in UI verification remains blocked by unavailable requester session below.
+- [x] Rotate displayed covers daily without changing stored photos; unit tests verify UTC stability, cycling and immutable arrays, and desktop/mobile checks confirm matching card/detail covers with no page errors.
 - [x] Add deterministic WhatsApp selling points with negation/sharing guards; all 50 formatter tests passed, including the five real examples, and preview reports build OK. Other displays and data unchanged.
 - [x] Emphasize public locations across cards, featured and detail displays.
 - [x] Apply server-side availability/photo/newest ordering and verify pagination and filters.
