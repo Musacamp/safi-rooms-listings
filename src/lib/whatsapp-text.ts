@@ -137,7 +137,7 @@ export function detectInsightSellingPoints(
 
 /** Ranked, evidence-only points for the room-list generator (not insight posts). */
 export function detectSellingPoints(
-  listing: Pick<WhatsAppRoom, "title" | "description" | "amenities" | "room_type" | "is_self_contained" | "distance_from_town">,
+  listing: Partial<Pick<WhatsAppRoom, "title" | "description" | "amenities" | "room_type" | "is_self_contained" | "distance_from_town">>,
 ): string[] {
   const text = [listing.title, listing.description, ...(listing.amenities ?? [])]
     .filter(Boolean).join(". ").toLowerCase().replace(/[-–—_]/g, " ").replace(/\s+/g, " ");
