@@ -1,0 +1,1 @@
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS cover_photos text[] NOT NULL DEFAULT '{}'::text[];
