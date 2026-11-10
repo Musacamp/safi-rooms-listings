@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WhatsAppTextEditor } from "@/components/WhatsAppTextEditor";
-import { buildWhatsAppText } from "@/lib/whatsapp-text";
+import { areaKey, buildMultiAreaText, buildPropertyText, buildWhatsAppText } from "@/lib/whatsapp-text";
 import { adminListAvailableListings } from "@/lib/admin-listings.functions";
 import { buildPosterImage, formatPosterDate, type PosterRoom } from "@/lib/poster-card";
 import { formatUGX } from "@/lib/format";
@@ -90,7 +90,7 @@ function Generator() {
     let out = all.filter((l) => {
       if (l.is_archived || !l.is_available) return false;
       if (catFilter && !catFilter.match(l)) return false;
-      if (locs.length && !locs.some((loc) => l.location.toLowerCase().includes(loc.toLowerCase())))
+      if (locs.length && !locs.some((loc) => areaKey(l.location).includes(areaKey(loc))))
         return false;
       if (l.rent_ugx < min || l.rent_ugx > max) return false;
       if (l.deposit_ugx > dep) return false;
@@ -117,6 +117,7 @@ function Generator() {
     // de-duplicate: same location + rent + deposit
     const seen = new Set<string>();
     out = out.filter((l) => {
+      if (l.room_type === "shop") return true;
       const key = `${l.location.trim().toLowerCase()}|${l.rent_ugx}|${l.deposit_ugx}`;
       if (seen.has(key)) return false;
       seen.add(key);
@@ -213,9 +214,11 @@ function Generator() {
   const toggleAmenity = (a: string) =>
     setAmenities((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]));
 
-  const generatedText = useMemo(
-    () => buildWhatsAppText(list, smart && !parsed.type ? "Available rooms" : category.title),
-    [list, smart, parsed.type, category.title],
+  const generatedText = useMemo(() => {
+    if (effectiveCat === "shop") return buildPropertyText(list);
+    if (smart && parsed.locations.length >= 2) return buildMultiAreaText(list, parsed.locations);
+    return buildWhatsAppText(list, smart && !parsed.type ? "Available rooms" : category.title);
+  }, [list, smart, parsed.type, parsed.locations, effectiveCat, category.title],
   );
   // Edits belong to the exact current filtered output; never show a previous category's message.
   const textSource = JSON.stringify([effectiveCat, q, location, minRent, maxRent, maxDeposit, amenities, addedDays, verifiedOnly, sort, generatedText]);
