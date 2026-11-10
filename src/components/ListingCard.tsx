@@ -11,7 +11,7 @@ import { useDailyCover } from "@/hooks/use-daily-cover";
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
 export function ListingCard({ listing }: { listing: Listing }) {
-  const { index: coverIndex } = useDailyCover(listing.photos);
+  const { index: coverIndex } = useDailyCover(listing.photos, listing.cover_photos);
   const cover = listing.photos?.[coverIndex];
   const amenities = listing.amenities ?? [];
   const shown = amenities.slice(0, 3);

@@ -27,7 +27,7 @@ export function ShareListingButton({
   iconOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const { index: coverIndex } = useDailyCover(listing.photos);
+  const { index: coverIndex } = useDailyCover(listing.photos, listing.cover_photos);
   const url = listingUrl(listing.id);
 
   const caption =

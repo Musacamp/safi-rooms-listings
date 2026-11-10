@@ -15,3 +15,18 @@ export function coverFirstPhotos(photos: readonly string[] | null | undefined, i
   if (!photos?.length) return [];
   return [...photos.slice(index), ...photos.slice(0, index)];
 }
+
+/**
+ * Index (into `photos`) of today's cover. Rotates only through hand-picked covers that
+ * still exist in `photos`; with no picks the first photo is used and nothing rotates.
+ */
+export function pickedCoverIndex(
+  photos: readonly string[] | null | undefined,
+  covers: readonly string[] | null | undefined,
+  day = photoDay(),
+): number {
+  const list = photos ?? [];
+  const allowed = list.map((p, i) => (covers?.includes(p) ? i : -1)).filter((i) => i >= 0);
+  if (!allowed.length) return 0;
+  return allowed[dailyCoverIndex(allowed.map(String), day)];
+}

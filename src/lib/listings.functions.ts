@@ -59,7 +59,16 @@ async function resolveListing(
   supabase: ReturnType<typeof makePublicClient>,
   row: Listing,
 ): Promise<Listing> {
-  return { ...row, photos: await resolvePhotos(supabase, row.photos ?? []) };
+  const raw = row.photos ?? [];
+  const resolved = await resolvePhotos(supabase, raw);
+  // Keep hand-picked covers aligned with the signed URLs (match by original path).
+  const covers = ((row as { cover_photos?: string[] | null }).cover_photos ?? [])
+    .map((c) => {
+      const i = raw.filter(Boolean).indexOf(c);
+      return i >= 0 ? resolved[i] : undefined;
+    })
+    .filter((u): u is string => !!u);
+  return { ...row, photos: resolved, cover_photos: covers } as Listing;
 }
 
 async function resolveListings(

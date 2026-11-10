@@ -114,7 +114,7 @@ function ListingPage() {
   const { id } = Route.useParams();
   const { data: listing } = useSuspenseQuery(listingOpts(id));
   const { data: similar } = useQuery(similarOpts(id));
-  const { index: coverIndex, day } = useDailyCover(listing?.photos);
+  const { index: coverIndex, day } = useDailyCover(listing?.photos, listing?.cover_photos);
   const [photoSelection, setPhotoSelection] = useState<{ id: string; day: number; index: number } | null>(null);
   const photoIdx = photoSelection?.id === id && photoSelection.day === day ? photoSelection.index : coverIndex;
   const setPhotoIdx = (next: number | ((index: number) => number)) => {
