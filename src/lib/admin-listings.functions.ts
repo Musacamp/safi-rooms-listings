@@ -38,6 +38,7 @@ const listingInput = z.object({
   distance_from_town: z.string().max(120).nullable().default(null),
   amenities: z.array(z.string()).default([]),
   photos: z.array(z.string()).default([]),
+  cover_photos: z.array(z.string()).default([]),
 });
 
 export const adminListAvailableListings = createServerFn({ method: "GET" })

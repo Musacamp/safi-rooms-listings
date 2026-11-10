@@ -12,6 +12,7 @@ export type ShareListing = {
   room_type: keyof typeof ROOM_TYPE_LABEL;
   amenities: string[] | null;
   photos: string[] | null;
+  cover_photos?: string[] | null;
   vacancies: number;
   is_available: boolean;
 };

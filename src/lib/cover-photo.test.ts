@@ -18,3 +18,11 @@ test("single photo never rotates and empty or null photos remain empty", () => {
   expect(coverFirstPhotos(null, 0)).toEqual([]);
   expect(coverFirstPhotos([], 0)).toEqual([]);
 });
+import { pickedCoverIndex } from "./cover-photo";
+test("rotation only uses hand-picked covers", () => {
+  const photos = ["a", "toilet", "b", "c"];
+  expect([0, 1, 2, 3].map((d) => photos[pickedCoverIndex(photos, ["a", "b", "c"], d)])).toEqual(["a", "b", "c", "a"]);
+  expect([0, 1, 7].map((d) => pickedCoverIndex(photos, ["b"], d))).toEqual([2, 2, 2]);
+  expect([0, 1, 5].map((d) => pickedCoverIndex(photos, [], d))).toEqual([0, 0, 0]);
+  expect(pickedCoverIndex(photos, ["removed"], 3)).toBe(0);
+});

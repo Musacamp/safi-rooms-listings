@@ -9,7 +9,7 @@ import { useDailyCover } from "@/hooks/use-daily-cover";
 type Listing = Database["public"]["Tables"]["listings"]["Row"];
 
 export function FeaturedCard({ listing }: { listing: Listing }) {
-  const { index: coverIndex } = useDailyCover(listing.photos);
+  const { index: coverIndex } = useDailyCover(listing.photos, listing.cover_photos);
   const cover = listing.photos?.[coverIndex];
   const occupied = !listing.is_available;
   const hydrated = useHydrated();

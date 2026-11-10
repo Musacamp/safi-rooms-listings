@@ -62,6 +62,7 @@ export type Database = {
         Row: {
           amenities: string[]
           calls_count: number
+          cover_photos: string[]
           created_at: string
           deposit_ugx: number
           description: string
@@ -90,6 +91,7 @@ export type Database = {
         Insert: {
           amenities?: string[]
           calls_count?: number
+          cover_photos?: string[]
           created_at?: string
           deposit_ugx?: number
           description?: string
@@ -118,6 +120,7 @@ export type Database = {
         Update: {
           amenities?: string[]
           calls_count?: number
+          cover_photos?: string[]
           created_at?: string
           deposit_ugx?: number
           description?: string

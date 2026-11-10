@@ -25,7 +25,7 @@ export type ListingFormValues = {
   distance_from_town: string | null;
   amenities: string[];
   photos: string[];
-
+  cover_photos: string[];
 };
 
 
@@ -55,6 +55,7 @@ export function ListingForm({
     distance_from_town: initial?.distance_from_town ?? null,
     amenities: initial?.amenities ?? [],
     photos: initial?.photos ?? [],
+    cover_photos: (initial?.cover_photos ?? []).filter((c) => (initial?.photos ?? []).includes(c)),
 
   });
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
@@ -144,7 +145,20 @@ export function ListingForm({
   };
 
   const removePhoto = (p: string) => {
-    setValues((prev) => ({ ...prev, photos: prev.photos.filter((x) => x !== p) }));
+    setValues((prev) => ({
+      ...prev,
+      photos: prev.photos.filter((x) => x !== p),
+      cover_photos: prev.cover_photos.filter((x) => x !== p),
+    }));
+  };
+
+  const toggleCoverPick = (p: string) => {
+    setValues((prev) => ({
+      ...prev,
+      cover_photos: prev.cover_photos.includes(p)
+        ? prev.cover_photos.filter((x) => x !== p)
+        : [...prev.cover_photos, p],
+    }));
   };
 
   const movePhoto = (idx: number, dir: -1 | 1) => {
@@ -370,17 +384,33 @@ export function ListingForm({
             <p className="mb-2 text-[11px] text-muted-foreground">
               First photo is the cover. Use arrows to reorder or ★ to set cover.
             </p>
+            <p className="mb-2 text-xs font-medium text-foreground">
+              Tap the photos that may be used as covers. Only these rotate.
+            </p>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {values.photos.map((p, idx) => {
                 const src = /^https?:\/\//.test(p) ? p : photoUrls[p];
                 const isCover = idx === 0;
+                const picked = values.cover_photos.includes(p);
                 return (
                   <div
                     key={p}
-                    className="relative aspect-square overflow-hidden rounded-lg bg-muted ring-1 ring-border"
+                    className={`relative aspect-square overflow-hidden rounded-lg bg-muted ${picked ? "ring-4 ring-primary" : "ring-1 ring-border"}`}
                   >
+                    <button
+                      type="button"
+                      onClick={() => toggleCoverPick(p)}
+                      aria-pressed={picked}
+                      aria-label={picked ? "Unmark cover photo" : "Mark as cover photo"}
+                      className="absolute inset-0 z-0"
+                    />
+                    {picked && (
+                      <span className="pointer-events-none absolute bottom-8 left-1/2 z-10 -translate-x-1/2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                        ✓ Cover pick
+                      </span>
+                    )}
                     {src ? (
-                      <img src={src} alt="" className="size-full object-cover" />
+                      <img src={src} alt="" className="pointer-events-none size-full object-cover" />
                     ) : (
                       <div className="grid size-full place-items-center text-[10px] text-muted-foreground">
                         Loading...

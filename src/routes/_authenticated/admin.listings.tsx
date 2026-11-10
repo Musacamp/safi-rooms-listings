@@ -244,7 +244,7 @@ function AdminListingRow({
   const [lightbox, setLightbox] = useState(false);
   const [idx, setIdx] = useState(0);
   const resolved = (l.photos ?? []).map((p) => urls[p]).filter(Boolean);
-  const { index: coverIndex } = useDailyCover(l.photos);
+  const { index: coverIndex } = useDailyCover(l.photos, l.cover_photos);
   const coverPath = l.photos?.[coverIndex];
   const cover = coverPath ? urls[coverPath] : undefined;
 

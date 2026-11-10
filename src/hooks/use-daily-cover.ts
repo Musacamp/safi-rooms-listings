@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { dailyCoverIndex, photoDay, PHOTO_DAY_MS } from "@/lib/cover-photo";
+import { pickedCoverIndex, photoDay, PHOTO_DAY_MS } from "@/lib/cover-photo";
 
 function subscribe(onChange: () => void) {
   let timer: ReturnType<typeof setTimeout>;
@@ -18,8 +18,11 @@ function subscribe(onChange: () => void) {
   };
 }
 
-export function useDailyCover(photos: readonly string[] | null | undefined) {
+export function useDailyCover(
+  photos: readonly string[] | null | undefined,
+  covers?: readonly string[] | null,
+) {
   // Stable SSR/hydration snapshot; the actual UTC day is read immediately after hydration.
   const day = useSyncExternalStore(subscribe, () => photoDay(), () => 0);
-  return { day, index: dailyCoverIndex(photos, day) };
+  return { day, index: pickedCoverIndex(photos, covers, day) };
 }

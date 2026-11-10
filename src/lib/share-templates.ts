@@ -136,6 +136,7 @@ export type ShareListing = {
   room_type: string;
   amenities: string[] | null;
   photos: string[] | null;
+  cover_photos?: string[] | null;
   vacancies: number;
   is_available: boolean;
   is_verified?: boolean;
