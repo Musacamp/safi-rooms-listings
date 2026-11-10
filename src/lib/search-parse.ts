@@ -11,7 +11,7 @@ export type ParsedQuery = {
 const TYPE_PATTERNS: { key: PropertyTypeKey; re: RegExp }[] = [
   { key: "single_self", re: /\bsingle[\s-]*(room[s]?)?[\s-]*self[\s-]?contained\b|\bself[\s-]?contained\s+single\b/i },
   { key: "double_self", re: /\bdouble[\s-]*(room[s]?)?[\s-]*self[\s-]?contained\b|\bself[\s-]?contained\s+double\b/i },
-  { key: "shop", re: /\bshops?\b/i },
+  { key: "shop", re: /\bshops?\b|\bpropert(?:y|ies)\b/i },
   { key: "business", re: /\bbusiness\s*(room[s]?)?\b/i },
   { key: "apartment", re: /\bapartments?\b|\bflats?\b/i },
   { key: "single", re: /\bsingle\s*(room[s]?)?\b/i },
@@ -46,6 +46,8 @@ const STOP_WORDS = new Set([
   "business",
   "shop",
   "shops",
+  "property",
+  "properties",
   "flat",
   "flats",
   "ugx",

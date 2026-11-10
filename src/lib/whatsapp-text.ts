@@ -201,3 +201,64 @@ export function buildWhatsAppText(rooms: WhatsAppRoom[], heading: string, date =
 export function whatsappTextUrl(text: string): string {
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
+
+/** Case- and spacing-insensitive area key: "Kam Swahili" === "kamswahili". */
+export const areaKey = (value: string) => value.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+
+export function joinAreas(areas: string[]): string {
+  if (areas.length <= 1) return areas.join("");
+  return `${areas.slice(0, -1).join(", ")} and ${areas[areas.length - 1]}`;
+}
+
+function roomTypeTitle(room: WhatsAppRoom): string {
+  const self = room.is_self_contained === true;
+  switch (room.room_type) {
+    case "single": return self ? "Single self-contained" : "Single room (ordinary)";
+    case "double": return self ? "Double self-contained" : "Double room (ordinary)";
+    case "self_contained": return "Single self-contained";
+    case "apartment": return "Apartment";
+    case "business": return "Business room";
+    default: return clean(room.title ?? "") || "Room";
+  }
+}
+
+const ugx = (n: number) => `UGX ${n.toLocaleString("en-US")}`;
+
+function wrapParts(heading: string, date: Date, blocks: string[], close: string): string[] {
+  const dateLabel = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Kampala" });
+  const parts: string[][] = [];
+  for (let offset = 0; offset < blocks.length; offset += 40) parts.push(blocks.slice(offset, offset + 40));
+  if (!parts.length) parts.push([]);
+  return parts.map((part, index) => [
+    `*SafiRooms · ${clean(heading)} · ${dateLabel}*`,
+    ...(parts.length > 1 ? [`Part ${index + 1}/${parts.length}`] : []),
+    "",
+    part.join("\n"),
+    "",
+    close,
+  ].join("\n"));
+}
+
+/** One combined message for several typed areas; every line has price, room type and area. */
+export function buildMultiAreaText(rooms: WhatsAppRoom[], areas: string[], date = new Date()): string[] {
+  const keys = areas.map(areaKey);
+  const matched = rooms.filter((r) => r.room_type !== "shop" && keys.some((k) => k && areaKey(r.location).includes(k)));
+  const lines = matched.map((room, i) => {
+    const features = detectSellingPoints(room);
+    return `${i + 1}. ${ugx(room.rent_ugx)} – ${roomTypeTitle(room)}, *${clean(room.location).toUpperCase()}*${features.length ? ` - ${features.join(", ")}` : ""}`;
+  });
+  const empty = areas.filter((_, i) => !matched.some((r) => areaKey(r.location).includes(keys[i])));
+  const blocks = [...lines, ...(empty.length && lines.length ? [""] : []), ...empty.map((a) => `No rooms available in ${a}`)];
+  return wrapParts(`Rooms available in ${joinAreas(areas)}`, date, blocks, `Book a viewing: WhatsApp ${CONTACT_PHONE_DISPLAY} · ${SITE_URL}`);
+}
+
+/** Mixed list of property items for sale (plots, phones, TVs…), one line each. */
+export function buildPropertyText(items: WhatsAppRoom[], date = new Date()): string[] {
+  const blocks = items.map((item, i) => {
+    const title = clean(item.title ?? "") || "Item";
+    const land = /\b(plot|land|acre|acres|hectare)s?\b/i.test(title);
+    const loc = land && item.location ? ` – ${clean(item.location)}` : "";
+    return `${i + 1}. ${title}${loc} – ${ugx(item.rent_ugx)}`;
+  });
+  return wrapParts("Property for sale", date, blocks, `To buy: WhatsApp ${CONTACT_PHONE_DISPLAY} · ${SITE_URL}`);
+}

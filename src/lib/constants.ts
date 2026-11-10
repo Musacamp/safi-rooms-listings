@@ -12,7 +12,7 @@ export const ROOM_TYPES = [
   { value: "double", label: "Double" },
   { value: "apartment", label: "Apartment" },
   { value: "business", label: "Business" },
-  { value: "shop", label: "Shop" },
+  { value: "shop", label: "Property" },
 ] as const;
 
 export type RoomTypeValue = (typeof ROOM_TYPES)[number]["value"] | "self_contained";
@@ -23,7 +23,7 @@ export const ROOM_TYPE_LABEL: Record<string, string> = {
   self_contained: "Self-Contained",
   apartment: "Apartment",
   business: "Business Room",
-  shop: "Shop",
+  shop: "Property",
 };
 
 /**
@@ -81,9 +81,9 @@ export const PROPERTY_TYPES = [
   },
   {
     key: "shop",
-    label: "Shop",
-    chip: "Shops",
-    poster: "SHOPS",
+    label: "Property",
+    chip: "Property",
+    poster: "PROPERTY",
     room_type: "shop",
     self: null as boolean | null,
   },

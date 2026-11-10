@@ -229,7 +229,7 @@ function Home() {
             <p className="mt-1 text-xs text-white/80" suppressHydrationWarning>
               {stats
                 ? `${stats.total} listings · ${stats.available} available now`
-                : "Verified rooms, apartments and shops"}
+                : "Verified rooms, apartments and property"}
             </p>
 
             <div className="mt-3 flex gap-2">
